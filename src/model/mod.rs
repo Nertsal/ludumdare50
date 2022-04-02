@@ -9,12 +9,17 @@ use renderer::*;
 type Coord = i32;
 type Position = Vec2<Coord>;
 
+// Things in world coordinates
 const TILE_SIZE: Vec2<f32> = vec2(1.0, 1.0);
 const UNIT_RADIUS: f32 = 0.25;
 const GRID_WIDTH: f32 = 0.05;
 const GRID_COLOR: Color<f32> = Color::GRAY;
+
+// Things in screen coordinates
 const ACTIONS_OFFSET: f32 = 25.0;
 const ACTIONS_WIDTH: f32 = 100.0;
+const ACTIONS_BORDER_WIDTH: f32 = 5.0;
+const ACTIONS_BORDER_COLOR: Color<f32> = Color::GRAY;
 
 struct Player {
     pub color: Color<f32>,
@@ -166,7 +171,7 @@ impl GameState {
 
         // Gen next action
         if global_rng().gen_bool(0.1) {
-            self.player_actions.enqueue(Action::AttackDirect, 0);
+            self.player_actions.enqueue(Action::AttackDirect, 4);
         }
     }
 }
@@ -194,7 +199,13 @@ impl geng::State for GameState {
         );
 
         // Grid
-        renderer.draw_grid(self.arena_bounds, TILE_SIZE, GRID_WIDTH, GRID_COLOR);
+        renderer.draw_grid(
+            self.arena_bounds,
+            TILE_SIZE,
+            -TILE_SIZE / 2.0,
+            GRID_WIDTH,
+            GRID_COLOR,
+        );
 
         let mut renderer = Renderer::new(
             &self.geng,
@@ -214,6 +225,8 @@ impl geng::State for GameState {
                 ),
                 framebuffer_size.map(|x| x - ACTIONS_OFFSET),
             ),
+            ACTIONS_BORDER_WIDTH,
+            ACTIONS_BORDER_COLOR,
         );
     }
 
