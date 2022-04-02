@@ -94,11 +94,10 @@ enum EnemyType {
 #[derive(Debug, Clone)]
 struct SpawnPrefab {
     movement: MovementType,
-    cooldown: Time,
     min_score: Score,
     next_spawn: Time,
     color: Color<f32>,
-    multipliers: HashMap<usize, f32>,
+    cooldowns: HashMap<usize, f32>,
     large_multiplier: f32,
     killed_siblings: usize,
 }
@@ -106,12 +105,12 @@ struct SpawnPrefab {
 impl SpawnPrefab {
     pub fn refresh_cooldown(&mut self, siblings: usize) {
         let killed_multiplier = 1.0 - self.killed_siblings as f32 * 0.05;
-        let siblings_multiplier = self
-            .multipliers
+        let cooldown = self
+            .cooldowns
             .get(&siblings)
             .copied()
-            .unwrap_or(self.large_multiplier);
-        let cooldown = self.cooldown as f32 * killed_multiplier * siblings_multiplier;
+            .unwrap_or(self.large_multiplier)
+            * killed_multiplier;
         self.next_spawn = cooldown.ceil() as _;
     }
 }
@@ -181,11 +180,10 @@ impl GameState {
                     EnemyType::Attacker,
                     SpawnPrefab {
                         movement: MovementType::Direct,
-                        cooldown: 2,
                         min_score: 0,
                         next_spawn: 1,
                         color: Color::RED,
-                        multipliers: [(0, 1.0), (1, 4.0), (2, 6.0), (3, 7.0)]
+                        cooldowns: [(0, 2.0), (1, 4.0), (2, 6.0), (3, 7.0)]
                             .into_iter()
                             .collect(),
                         large_multiplier: 8.0,
@@ -198,11 +196,10 @@ impl GameState {
                         movement: MovementType::SingleDouble {
                             is_next_single: true,
                         },
-                        cooldown: 6,
                         min_score: 10,
                         next_spawn: 1,
                         color: Color::GREEN,
-                        multipliers: [(0, 1.0), (1, 12.0), (2, 12.0), (3, 18.0)]
+                        cooldowns: [(0, 6.0), (1, 12.0), (2, 12.0), (3, 18.0)]
                             .into_iter()
                             .collect(),
                         large_multiplier: 20.0,
@@ -213,11 +210,10 @@ impl GameState {
                     EnemyType::King,
                     SpawnPrefab {
                         movement: MovementType::Neighbour,
-                        cooldown: 6,
                         min_score: 60,
                         next_spawn: 1,
                         color: Color::MAGENTA,
-                        multipliers: [(0, 1.0), (1, 10.0), (2, 15.0), (3, 15.0)]
+                        cooldowns: [(0, 6.0), (1, 10.0), (2, 15.0), (3, 15.0)]
                             .into_iter()
                             .collect(),
                         large_multiplier: 18.0,
