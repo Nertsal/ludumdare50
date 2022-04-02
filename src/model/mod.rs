@@ -125,12 +125,6 @@ impl geng::State for GameState {
 
         let mut renderer = Renderer::new(&self.geng, &self.camera, framebuffer);
 
-        renderer.draw_circle(
-            self.player.position.map(|x| x as f32) * TILE_SIZE,
-            UNIT_RADIUS,
-            self.player.color,
-        );
-
         for enemy in &self.enemies {
             renderer.draw_circle(
                 enemy.position.map(|x| x as f32) * TILE_SIZE,
@@ -138,6 +132,12 @@ impl geng::State for GameState {
                 enemy.color,
             );
         }
+
+        renderer.draw_circle(
+            self.player.position.map(|x| x as f32) * TILE_SIZE,
+            UNIT_RADIUS,
+            self.player.color,
+        );
 
         renderer.draw_grid(self.arena_bounds, TILE_SIZE, GRID_WIDTH, GRID_COLOR);
     }
