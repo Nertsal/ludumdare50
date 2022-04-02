@@ -11,6 +11,8 @@ type Time = i32;
 type Score = u32;
 type Position = Vec2<Coord>;
 
+const INTERPOLATION_SPEED: f32 = 10.0;
+
 // Things in world coordinates
 const TILE_SIZE: Vec2<f32> = vec2(1.0, 1.0);
 const UNIT_RADIUS: f32 = 0.25;
@@ -27,6 +29,7 @@ const ACTIONS_BORDER_COLOR: Color<f32> = Color::GRAY;
 struct Player {
     pub color: Color<f32>,
     pub position: Position,
+    pub render_pos: Vec2<f32>,
 }
 
 #[derive(Debug, Clone)]
@@ -34,6 +37,7 @@ struct Enemy {
     pub typ: EnemyType,
     pub color: Color<f32>,
     pub position: Position,
+    pub render_pos: Vec2<f32>,
     pub movement: MovementType,
     pub is_dead: bool,
 }
@@ -173,6 +177,7 @@ impl GameState {
             player: Player {
                 color: Color::BLUE,
                 position: vec2(0, 0),
+                render_pos: vec2(0.0, 0.0),
             },
             enemies: vec![],
             spawn_prefabs: [
@@ -281,6 +286,7 @@ impl GameState {
                     typ: enemy_type.clone(),
                     color: prefab.color,
                     position: spawn_point,
+                    render_pos: spawn_point.map(|x| x as f32),
                     movement: prefab.movement.clone(),
                     is_dead: false,
                 };
@@ -336,6 +342,18 @@ impl GameState {
 }
 
 impl geng::State for GameState {
+    fn update(&mut self, delta_time: f64) {
+        let delta_time = delta_time as f32;
+
+        // Interpolate player and enemies
+        self.player.render_pos += (self.player.position.map(|x| x as f32) - self.player.render_pos)
+            .clamp_len(..=INTERPOLATION_SPEED * delta_time);
+        for enemy in &mut self.enemies {
+            enemy.render_pos += (enemy.position.map(|x| x as f32) - enemy.render_pos)
+                .clamp_len(..=INTERPOLATION_SPEED * delta_time);
+        }
+    }
+
     fn draw(&mut self, framebuffer: &mut ugli::Framebuffer) {
         let framebuffer_size = framebuffer.size().map(|x| x as f32);
         ugli::clear(framebuffer, Some(Color::BLACK), None);
@@ -343,16 +361,12 @@ impl geng::State for GameState {
 
         // Enemies
         for enemy in &self.enemies {
-            renderer.draw_circle(
-                enemy.position.map(|x| x as f32) * TILE_SIZE,
-                UNIT_RADIUS,
-                enemy.color,
-            );
+            renderer.draw_circle(enemy.render_pos * TILE_SIZE, UNIT_RADIUS, enemy.color);
         }
 
         // Player
         renderer.draw_circle(
-            self.player.position.map(|x| x as f32) * TILE_SIZE,
+            self.player.render_pos * TILE_SIZE,
             UNIT_RADIUS,
             self.player.color,
         );
