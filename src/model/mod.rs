@@ -23,7 +23,7 @@ struct Enemy {
 enum MovementType {
     Direct,
     Neighbour,
-    SingleDouble { isNextSingle: bool },
+    SingleDouble { is_next_single: bool },
 }
 
 impl MovementType {
@@ -37,13 +37,13 @@ impl MovementType {
                 }
             }
             Self::Neighbour => vec2(target.x.signum(), target.y.signum()),
-            Self::SingleDouble { isNextSingle } => {
-                let delta = if *isNextSingle {
+            Self::SingleDouble { is_next_single } => {
+                let delta = if *is_next_single {
                     Self::Direct.move_towards(target)
                 } else {
                     Self::Direct.move_towards(target) * 2
                 };
-                *isNextSingle = !*isNextSingle;
+                *is_next_single = !*is_next_single;
                 delta
             }
         }
@@ -95,7 +95,9 @@ impl GameState {
                 Enemy {
                     color: Color::MAGENTA,
                     position: vec2(-4, 5),
-                    movement: MovementType::SingleDouble { isNextSingle: true },
+                    movement: MovementType::SingleDouble {
+                        is_next_single: true,
+                    },
                 },
             ],
         }
