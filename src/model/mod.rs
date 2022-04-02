@@ -100,17 +100,18 @@ struct SpawnPrefab {
     color: Color<f32>,
     multipliers: HashMap<usize, f32>,
     large_multiplier: f32,
-    killed_siblings: f32,
+    killed_siblings: usize,
 }
 
 impl SpawnPrefab {
     pub fn refresh_cooldown(&mut self, siblings: usize) {
-        let mut cooldown = self.cooldown as f32 * (1.0 - self.killed_siblings * 0.05);
-        cooldown *= self
+        let killed_multiplier = 1.0 - self.killed_siblings as f32 * 0.05;
+        let siblings_multiplier = self
             .multipliers
             .get(&siblings)
             .copied()
             .unwrap_or(self.large_multiplier);
+        let cooldown = self.cooldown as f32 * killed_multiplier * siblings_multiplier;
         self.next_spawn = cooldown.ceil() as _;
     }
 }
@@ -188,7 +189,7 @@ impl GameState {
                             .into_iter()
                             .collect(),
                         large_multiplier: 8.0,
-                        killed_siblings: 0.0,
+                        killed_siblings: 0,
                     },
                 ),
                 (
@@ -205,7 +206,7 @@ impl GameState {
                             .into_iter()
                             .collect(),
                         large_multiplier: 20.0,
-                        killed_siblings: 0.0,
+                        killed_siblings: 0,
                     },
                 ),
                 (
@@ -220,7 +221,7 @@ impl GameState {
                             .into_iter()
                             .collect(),
                         large_multiplier: 18.0,
-                        killed_siblings: 0.0,
+                        killed_siblings: 0,
                     },
                 ),
             ]
@@ -273,7 +274,9 @@ impl GameState {
         {
             prefab.next_spawn -= 1;
             if prefab.next_spawn <= 0 {
-                prefab.refresh_cooldown(*siblings.get(enemy_type).unwrap());
+                let sibs = siblings.get_mut(enemy_type).unwrap();
+                *sibs += 1;
+                prefab.refresh_cooldown(*sibs);
                 let spawn_points = self.arena_bounds.corners();
                 let &spawn_point = spawn_points
                     .choose(&mut global_rng())
@@ -323,6 +326,10 @@ impl GameState {
                 self.enemies.retain(|enemy| {
                     if enemy.is_dead {
                         self.score += 1;
+                        self.spawn_prefabs
+                            .get_mut(&enemy.typ)
+                            .unwrap()
+                            .killed_siblings += 1;
                     }
                     !enemy.is_dead
                 });
