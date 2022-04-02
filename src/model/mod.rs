@@ -31,6 +31,7 @@ struct Player {
 
 #[derive(Debug, Clone)]
 struct Enemy {
+    pub typ: EnemyType,
     pub color: Color<f32>,
     pub position: Position,
     pub movement: MovementType,
@@ -83,12 +84,35 @@ fn clamp_pos(pos: Position, aabb: AABB<Coord>) -> Position {
     )
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+enum EnemyType {
+    Attacker,
+    Frog,
+    King,
+}
+
+#[derive(Debug, Clone)]
 struct SpawnPrefab {
     movement: MovementType,
     cooldown: Time,
     min_score: Score,
     next_spawn: Time,
     color: Color<f32>,
+    multipliers: HashMap<usize, f32>,
+    large_multiplier: f32,
+    killed_siblings: f32,
+}
+
+impl SpawnPrefab {
+    pub fn refresh_cooldown(&mut self, siblings: usize) {
+        let mut cooldown = self.cooldown as f32 * (1.0 - self.killed_siblings * 0.05);
+        cooldown *= self
+            .multipliers
+            .get(&siblings)
+            .copied()
+            .unwrap_or(self.large_multiplier);
+        self.next_spawn = cooldown.ceil() as _;
+    }
 }
 
 pub enum Action {
@@ -130,7 +154,7 @@ pub struct GameState {
     player_actions: ActionQueue,
     player: Player,
     enemies: Vec<Enemy>,
-    spawn_prefabs: Vec<SpawnPrefab>,
+    spawn_prefabs: HashMap<EnemyType, SpawnPrefab>,
 }
 
 impl GameState {
@@ -151,31 +175,57 @@ impl GameState {
                 position: vec2(0, 0),
             },
             enemies: vec![],
-            spawn_prefabs: vec![
-                SpawnPrefab {
-                    movement: MovementType::Direct,
-                    cooldown: 2,
-                    min_score: 0,
-                    next_spawn: 1,
-                    color: Color::RED,
-                },
-                SpawnPrefab {
-                    movement: MovementType::SingleDouble {
-                        is_next_single: true,
+            spawn_prefabs: [
+                (
+                    EnemyType::Attacker,
+                    SpawnPrefab {
+                        movement: MovementType::Direct,
+                        cooldown: 2,
+                        min_score: 0,
+                        next_spawn: 1,
+                        color: Color::RED,
+                        multipliers: [(0, 1.0), (1, 4.0), (2, 6.0), (3, 7.0)]
+                            .into_iter()
+                            .collect(),
+                        large_multiplier: 8.0,
+                        killed_siblings: 0.0,
                     },
-                    cooldown: 6,
-                    min_score: 10,
-                    next_spawn: 1,
-                    color: Color::GREEN,
-                },
-                SpawnPrefab {
-                    movement: MovementType::Neighbour,
-                    cooldown: 6,
-                    min_score: 60,
-                    next_spawn: 1,
-                    color: Color::MAGENTA,
-                },
-            ],
+                ),
+                (
+                    EnemyType::Frog,
+                    SpawnPrefab {
+                        movement: MovementType::SingleDouble {
+                            is_next_single: true,
+                        },
+                        cooldown: 6,
+                        min_score: 10,
+                        next_spawn: 1,
+                        color: Color::GREEN,
+                        multipliers: [(0, 1.0), (1, 12.0), (2, 12.0), (3, 18.0)]
+                            .into_iter()
+                            .collect(),
+                        large_multiplier: 20.0,
+                        killed_siblings: 0.0,
+                    },
+                ),
+                (
+                    EnemyType::King,
+                    SpawnPrefab {
+                        movement: MovementType::Neighbour,
+                        cooldown: 6,
+                        min_score: 60,
+                        next_spawn: 1,
+                        color: Color::MAGENTA,
+                        multipliers: [(0, 1.0), (1, 10.0), (2, 15.0), (3, 15.0)]
+                            .into_iter()
+                            .collect(),
+                        large_multiplier: 18.0,
+                        killed_siblings: 0.0,
+                    },
+                ),
+            ]
+            .into_iter()
+            .collect(),
         }
     }
 
@@ -206,20 +256,30 @@ impl GameState {
             self.player_actions.enqueue(Action::AttackDirect, 4);
         }
 
+        // Count siblings
+        let mut siblings = HashMap::new();
+        for (enemy_type, _) in &self.spawn_prefabs {
+            siblings.insert(enemy_type.clone(), 0);
+        }
+        for enemy in &self.enemies {
+            *siblings.get_mut(&enemy.typ).unwrap() += 1;
+        }
+
         // Spawn new enemies
-        for prefab in self
+        for (enemy_type, prefab) in self
             .spawn_prefabs
             .iter_mut()
-            .filter(|prefab| self.score >= prefab.min_score)
+            .filter(|(_, prefab)| self.score >= prefab.min_score)
         {
             prefab.next_spawn -= 1;
             if prefab.next_spawn <= 0 {
-                prefab.next_spawn = prefab.cooldown;
+                prefab.refresh_cooldown(*siblings.get(enemy_type).unwrap());
                 let spawn_points = self.arena_bounds.corners();
                 let &spawn_point = spawn_points
                     .choose(&mut global_rng())
                     .expect("Failed to find a spawn point");
                 let enemy = Enemy {
+                    typ: enemy_type.clone(),
                     color: prefab.color,
                     position: spawn_point,
                     movement: prefab.movement.clone(),
