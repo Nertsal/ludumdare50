@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use geng::Camera2d;
 
 use super::*;
@@ -60,11 +62,39 @@ fn clamp_pos(pos: Position, aabb: AABB<Coord>) -> Position {
     )
 }
 
+enum Action {
+    AttackDirect,
+}
+
+#[derive(Default)]
+struct ActionQueue {
+    actions: VecDeque<Option<Action>>,
+}
+
+impl ActionQueue {
+    pub fn pop(&mut self) -> Option<Action> {
+        self.actions.pop_front().flatten()
+    }
+
+    pub fn enqueue(&mut self, action: Action, time: u32) {
+        let time = time as usize;
+        if self.actions.len() <= time {
+            for _ in 0..time - self.actions.len() {
+                self.actions.push_back(None);
+            }
+            self.actions.push_back(Some(action));
+            return;
+        }
+        self.actions[time] = Some(action);
+    }
+}
+
 pub struct GameState {
     geng: Geng,
     assets: Rc<Assets>,
     camera: Camera2d,
     arena_bounds: AABB<Coord>,
+    player_actions: ActionQueue,
     player: Player,
     enemies: Vec<Enemy>,
 }
@@ -80,6 +110,7 @@ impl GameState {
                 rotation: 0.0,
                 fov: 15.0,
             },
+            player_actions: ActionQueue::default(),
             player: Player {
                 color: Color::BLUE,
                 position: vec2(0, 0),
@@ -107,8 +138,10 @@ impl GameState {
     }
 
     pub fn tick(&mut self, player_move: Position) {
+        // Move player
         self.player.position = clamp_pos(self.player.position + player_move, self.arena_bounds);
 
+        // Move enemies
         for enemy in &mut self.enemies {
             let delta = self.player.position - enemy.position;
             enemy.position = clamp_pos(
@@ -116,15 +149,28 @@ impl GameState {
                 self.arena_bounds,
             );
         }
+
+        // Player actions
+        for action in self.player_actions.pop() {
+            match action {
+                Action::AttackDirect => {
+                    warn!("TODO: AttackDirect");
+                }
+            }
+        }
+
+        if global_rng().gen_bool(0.1) {
+            self.player_actions.enqueue(Action::AttackDirect, 0);
+        }
     }
 }
 
 impl geng::State for GameState {
     fn draw(&mut self, framebuffer: &mut ugli::Framebuffer) {
         ugli::clear(framebuffer, Some(Color::BLACK), None);
+        let mut renderer = Renderer::new(&self.geng, &self.assets, &self.camera, framebuffer);
 
-        let mut renderer = Renderer::new(&self.geng, &self.camera, framebuffer);
-
+        // Enemies
         for enemy in &self.enemies {
             renderer.draw_circle(
                 enemy.position.map(|x| x as f32) * TILE_SIZE,
@@ -133,12 +179,14 @@ impl geng::State for GameState {
             );
         }
 
+        // Player
         renderer.draw_circle(
             self.player.position.map(|x| x as f32) * TILE_SIZE,
             UNIT_RADIUS,
             self.player.color,
         );
 
+        // Grid
         renderer.draw_grid(self.arena_bounds, TILE_SIZE, GRID_WIDTH, GRID_COLOR);
     }
 

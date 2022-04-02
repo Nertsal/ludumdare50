@@ -4,6 +4,7 @@ use super::*;
 
 pub struct Renderer<'a, 'f> {
     geng: &'a Geng,
+    assets: &'a Rc<Assets>,
     camera: &'a Camera2d,
     framebuffer: &'a mut ugli::Framebuffer<'f>,
 }
@@ -11,11 +12,13 @@ pub struct Renderer<'a, 'f> {
 impl<'a, 'f> Renderer<'a, 'f> {
     pub fn new(
         geng: &'a Geng,
+        assets: &'a Rc<Assets>,
         camera: &'a Camera2d,
         framebuffer: &'a mut ugli::Framebuffer<'f>,
     ) -> Self {
         Self {
             geng,
+            assets,
             camera,
             framebuffer,
         }
