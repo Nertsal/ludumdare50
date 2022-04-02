@@ -6,8 +6,11 @@ use renderer::*;
 
 type Coord = i32;
 type Position = Vec2<Coord>;
+
 const TILE_SIZE: Vec2<f32> = vec2(1.0, 1.0);
 const UNIT_RADIUS: f32 = 0.25;
+const GRID_WIDTH: f32 = 0.05;
+const GRID_COLOR: Color<f32> = Color::GRAY;
 
 struct Player {
     pub color: Color<f32>,
@@ -75,7 +78,7 @@ impl GameState {
             camera: Camera2d {
                 center: Vec2::ZERO,
                 rotation: 0.0,
-                fov: 10.0,
+                fov: 15.0,
             },
             player: Player {
                 color: Color::BLUE,
@@ -135,6 +138,8 @@ impl geng::State for GameState {
                 enemy.color,
             );
         }
+
+        renderer.draw_grid(self.arena_bounds, TILE_SIZE, GRID_WIDTH, GRID_COLOR);
     }
 
     fn handle_event(&mut self, event: geng::Event) {
