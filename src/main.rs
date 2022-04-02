@@ -1,6 +1,7 @@
 use geng::prelude::*;
 
-mod game_state;
+mod model;
+mod renderer;
 
 #[derive(geng::Assets)]
 pub struct Assets {}
@@ -18,7 +19,7 @@ fn main() {
             let geng = geng.clone();
             move |assets| {
                 let assets = assets.unwrap();
-                game_state::GameState::new(&geng, &Rc::new(assets))
+                model::GameState::new(&geng, &Rc::new(assets))
             }
         }),
     );
