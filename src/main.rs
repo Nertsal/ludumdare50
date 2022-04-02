@@ -1,27 +1,25 @@
 use geng::prelude::*;
 
-pub struct State {
-    geng: Geng,
-}
+mod game_state;
 
-impl State {
-    pub fn new(geng: &Geng) -> Self {
-        Self { geng: geng.clone() }
-    }
-}
-
-impl geng::State for State {
-    fn draw(&mut self, framebuffer: &mut ugli::Framebuffer) {
-        ugli::clear(framebuffer, Some(Color::BLACK), None);
-    }
-}
+#[derive(geng::Assets)]
+pub struct Assets {}
 
 fn main() {
     logger::init().unwrap();
     geng::setup_panic_handler();
 
     let geng = Geng::new("Delay the inevitable");
-    let state = State::new(&geng);
+    let assets = <Assets as geng::LoadAsset>::load(&geng, &static_path());
 
-    geng::run(&geng, state);
+    geng::run(
+        &geng,
+        geng::LoadingScreen::new(&geng, geng::EmptyLoadingScreen, assets, {
+            let geng = geng.clone();
+            move |assets| {
+                let assets = assets.unwrap();
+                game_state::GameState::new(&geng, &Rc::new(assets))
+            }
+        }),
+    );
 }
