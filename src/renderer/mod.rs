@@ -1,6 +1,6 @@
 use geng::Draw2d;
 
-use model::ActionQueue;
+use crate::model::Attack;
 
 use super::*;
 
@@ -78,9 +78,9 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
         }
     }
 
-    pub fn draw_actions(
+    pub fn draw_attacks(
         &mut self,
-        actions: &ActionQueue,
+        actions: &[Attack],
         action_limit: usize,
         bounds: AABB<f32>,
         border_width: f32,
@@ -92,9 +92,9 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
 
         let top_right = bounds.top_right();
         let bottom_left = bounds.bottom_left();
-        let single_height = top_right.y / action_limit as f32;
-        let single_top_right = vec2(top_right.x, bottom_left.y + single_height);
-        let single_aabb = AABB::from_corners(bottom_left, single_top_right);
+        let single_height = bounds.height() / action_limit as f32;
+        let single_aabb =
+            AABB::from_corners(vec2(bottom_left.x, top_right.y - single_height), top_right);
 
         self.draw_grid(
             AABB::from_corners(vec2(0, 0), vec2(0, action_limit as i32 - 1)),
@@ -104,12 +104,58 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
             border_color,
         );
 
-        for (index, action) in actions.iter().enumerate().take(action_limit) {
-            if let Some(_) = action {
-                let aabb = single_aabb.translate(vec2(0.0, single_height * index as f32));
-                let radius = aabb.height().min(aabb.width()) / 2.0;
-                self.draw_circle(aabb.center(), radius, Color::WHITE);
-            }
+        for (index, attack) in actions.iter().enumerate().take(action_limit) {
+            let aabb = single_aabb.translate(vec2(0.0, -single_height * index as f32));
+            let aabb = aabb.extend_uniform(-aabb.width() * 0.1);
+            self.draw_attack(attack, aabb);
+        }
+    }
+
+    pub fn draw_attack(&mut self, attack: &Attack, aabb: AABB<f32>) {
+        let boundary = AABB::points_bounding_box(
+            attack
+                .attack_positions(Vec2::ZERO)
+                .chain(std::iter::once(Vec2::ZERO)),
+        );
+        // let max_half_width = (boundary.x_max as f32 + 0.5).max(-boundary.x_min as f32 + 0.5);
+        // let max_half_height = (boundary.y_max as f32 + 0.5).max(-boundary.y_min as f32 + 0.5);
+        // let scale =
+        //     (aabb.width() / 2.0 / max_half_width).min(aabb.height() / 2.0 / max_half_height);
+        let scale = aabb.size() / boundary.size().map(|x| x as f32 + 1.0);
+        let scale = scale.x.min(scale.y);
+        let aabb = aabb.translate(-boundary.map(|x| x as f32).center() * scale);
+
+        let tile_size = vec2(scale, scale);
+        self.draw_grid(
+            boundary,
+            tile_size,
+            aabb.center() - tile_size / 2.0,
+            2.5,
+            Color::GRAY,
+        );
+
+        draw_2d::Ellipse::circle_with_cut(
+            aabb.center(),
+            scale / 2.0 * 0.7,
+            scale / 2.0 * 0.8,
+            model::PLAYER_COLOR,
+        )
+        .draw_2d(self.geng, self.framebuffer, self.camera);
+        for pos in attack.attack_positions(Vec2::ZERO) {
+            let aabb = AABB::point(tile_size * pos.map(|x| x as f32) + aabb.center())
+                .extend_uniform(scale / 2.0 - scale * 0.2);
+            draw_2d::Segment::new(
+                Segment::new(aabb.bottom_left(), aabb.top_right()),
+                scale * 0.1,
+                Color::RED,
+            )
+            .draw_2d(self.geng, self.framebuffer, self.camera);
+            draw_2d::Segment::new(
+                Segment::new(aabb.top_left(), aabb.bottom_right()),
+                scale * 0.1,
+                Color::RED,
+            )
+            .draw_2d(self.geng, self.framebuffer, self.camera);
         }
     }
 

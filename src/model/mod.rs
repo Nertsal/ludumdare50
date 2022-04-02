@@ -1,5 +1,3 @@
-use std::collections::VecDeque;
-
 use geng::Camera2d;
 
 use super::*;
@@ -11,6 +9,7 @@ type Time = i32;
 type Score = u32;
 type Position = Vec2<Coord>;
 
+pub const PLAYER_COLOR: Color<f32> = Color::BLUE;
 const INTERPOLATION_SPEED: f32 = 10.0;
 
 // Things in world coordinates
@@ -21,7 +20,7 @@ const GRID_COLOR: Color<f32> = Color::GRAY;
 
 // Things in screen coordinates
 const ACTIONS_OFFSET: f32 = 25.0;
-const ACTIONS_WIDTH: f32 = 100.0;
+const ACTIONS_WIDTH: f32 = 300.0;
 const ACTIONS_BORDER_WIDTH: f32 = 5.0;
 const ACTIONS_BORDER_COLOR: Color<f32> = Color::GRAY;
 
@@ -119,33 +118,19 @@ impl SpawnPrefab {
     }
 }
 
-pub enum Action {
-    AttackDirect,
+pub struct Attack {
+    pattern: Vec<Position>,
 }
 
-#[derive(Default)]
-pub struct ActionQueue {
-    actions: VecDeque<Option<Action>>,
-}
-
-impl ActionQueue {
-    pub fn iter(&self) -> impl Iterator<Item = &Option<Action>> {
-        self.actions.iter()
-    }
-
-    pub fn pop(&mut self) -> Option<Action> {
-        self.actions.pop_front().flatten()
-    }
-
-    pub fn enqueue(&mut self, action: Action, time: usize) {
-        if self.actions.len() <= time {
-            for _ in 0..time - self.actions.len() {
-                self.actions.push_back(None);
-            }
-            self.actions.push_back(Some(action));
-            return;
+impl Attack {
+    pub fn rotate_left(&mut self) {
+        for pos in &mut self.pattern {
+            *pos = vec2(-pos.y, pos.x);
         }
-        self.actions[time] = Some(action);
+    }
+
+    pub fn attack_positions(&self, caster_pos: Position) -> impl Iterator<Item = Position> + '_ {
+        self.pattern.iter().map(move |delta| caster_pos + *delta)
     }
 }
 
@@ -155,7 +140,7 @@ pub struct GameState {
     camera: Camera2d,
     arena_bounds: AABB<Coord>,
     score: Score,
-    player_actions: ActionQueue,
+    player_attacks: Vec<Attack>,
     player: Player,
     enemies: Vec<Enemy>,
     spawn_prefabs: HashMap<EnemyType, SpawnPrefab>,
@@ -173,13 +158,26 @@ impl GameState {
                 rotation: 0.0,
                 fov: 15.0,
             },
-            player_actions: ActionQueue::default(),
             player: Player {
-                color: Color::BLUE,
+                color: PLAYER_COLOR,
                 position: vec2(0, 0),
                 render_pos: vec2(0.0, 0.0),
             },
             enemies: vec![],
+            player_attacks: vec![
+                Attack {
+                    pattern: vec![vec2(1, 0)],
+                },
+                Attack {
+                    pattern: vec![vec2(1, 0), vec2(2, 1)],
+                },
+                Attack {
+                    pattern: vec![vec2(1, 0), vec2(2, 0), vec2(1, 1)],
+                },
+                Attack {
+                    pattern: vec![vec2(1, 0), vec2(2, 0), vec2(3, 0), vec2(3, 1)],
+                },
+            ],
             spawn_prefabs: [
                 (
                     EnemyType::Attacker,
@@ -248,15 +246,15 @@ impl GameState {
 
         // self.player_collide();
 
-        // Player actions
-        for action in self.player_actions.pop() {
-            self.action(Caster::Player, self.player.position, action);
-        }
+        // // Player actions
+        // for action in self.player_actions.pop() {
+        //     self.action(Caster::Player, self.player.position, action);
+        // }
 
-        // Gen next action
-        if global_rng().gen_bool(0.1) {
-            self.player_actions.enqueue(Action::AttackDirect, 4);
-        }
+        // // Gen next action
+        // if global_rng().gen_bool(0.1) {
+        //     self.player_actions.enqueue(Action::AttackDirect, 4);
+        // }
 
         // Count siblings
         let mut siblings = HashMap::new();
@@ -307,14 +305,9 @@ impl GameState {
             .map(|(caster, _)| caster)
     }
 
-    fn action(&mut self, caster: Caster, origin: Position, action: Action) {
-        match action {
-            Action::AttackDirect => {
-                let attack_positions =
-                    [vec2(1, 0), vec2(-1, 0), vec2(0, -1), vec2(0, 1)].map(|delta| origin + delta);
-                self.attack_positions(caster, &attack_positions);
-            }
-        }
+    fn attack(&mut self, caster: Caster, origin: Position, attack: &Attack) {
+        let attack_positions = attack.attack_positions(origin).collect::<Vec<_>>();
+        self.attack_positions(caster, &attack_positions);
     }
 
     fn attack_positions(&mut self, caster: Caster, positions: &[Position]) {
@@ -388,9 +381,9 @@ impl geng::State for GameState {
         );
 
         // Actions
-        renderer.draw_actions(
-            &self.player_actions,
-            5,
+        renderer.draw_attacks(
+            &self.player_attacks,
+            4,
             AABB::from_corners(
                 vec2(
                     framebuffer_size.x - ACTIONS_WIDTH - ACTIONS_OFFSET,
