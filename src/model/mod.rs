@@ -120,9 +120,19 @@ impl SpawnPrefab {
 
 pub struct Attack {
     pattern: Vec<Position>,
+    cooldown: Time,
+    next_attack: Time,
 }
 
 impl Attack {
+    pub fn new(cooldown: Time, pattern: impl IntoIterator<Item = Position>) -> Self {
+        Self {
+            pattern: pattern.into_iter().collect(),
+            cooldown,
+            next_attack: 0,
+        }
+    }
+
     pub fn rotate_left(&mut self) {
         for pos in &mut self.pattern {
             *pos = vec2(-pos.y, pos.x);
@@ -165,18 +175,10 @@ impl GameState {
             },
             enemies: vec![],
             player_attacks: vec![
-                Attack {
-                    pattern: vec![vec2(1, 0)],
-                },
-                Attack {
-                    pattern: vec![vec2(1, 0), vec2(2, 1)],
-                },
-                Attack {
-                    pattern: vec![vec2(1, 0), vec2(2, 0), vec2(1, 1)],
-                },
-                Attack {
-                    pattern: vec![vec2(1, 0), vec2(2, 0), vec2(3, 0), vec2(3, 1)],
-                },
+                Attack::new(2, [vec2(1, 0)]),
+                Attack::new(2, [vec2(1, 0), vec2(2, 1)]),
+                Attack::new(2, [vec2(1, 0), vec2(2, 0), vec2(1, 1)]),
+                Attack::new(2, [vec2(1, 0), vec2(2, 0), vec2(3, 0), vec2(3, 1)]),
             ],
             spawn_prefabs: [
                 (
@@ -246,15 +248,16 @@ impl GameState {
 
         // self.player_collide();
 
-        // // Player actions
-        // for action in self.player_actions.pop() {
-        //     self.action(Caster::Player, self.player.position, action);
-        // }
-
-        // // Gen next action
-        // if global_rng().gen_bool(0.1) {
-        //     self.player_actions.enqueue(Action::AttackDirect, 4);
-        // }
+        // Player actions
+        let mut attack_positions = Vec::new();
+        for attack in &mut self.player_attacks {
+            attack.next_attack -= 1;
+            if attack.next_attack <= 0 {
+                attack.next_attack = attack.cooldown;
+                attack_positions.extend(attack.attack_positions(self.player.position));
+            }
+        }
+        self.attack_positions(Caster::Player, &attack_positions);
 
         // Count siblings
         let mut siblings = HashMap::new();
@@ -303,11 +306,6 @@ impl GameState {
         units
             .find(|(_, unit_pos)| *unit_pos == position)
             .map(|(caster, _)| caster)
-    }
-
-    fn attack(&mut self, caster: Caster, origin: Position, attack: &Attack) {
-        let attack_positions = attack.attack_positions(origin).collect::<Vec<_>>();
-        self.attack_positions(caster, &attack_positions);
     }
 
     fn attack_positions(&mut self, caster: Caster, positions: &[Position]) {
