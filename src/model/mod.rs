@@ -4,7 +4,8 @@ use super::*;
 
 use renderer::*;
 
-type Position = Vec2<i32>;
+type Coord = i32;
+type Position = Vec2<Coord>;
 const TILE_SIZE: Vec2<f32> = vec2(1.0, 1.0);
 const UNIT_RADIUS: f32 = 0.25;
 
@@ -25,10 +26,18 @@ enum MovementType {
     SingleDouble { isNextSingle: bool },
 }
 
+fn clamp_pos(pos: Position, aabb: AABB<Coord>) -> Position {
+    vec2(
+        pos.x.clamp(aabb.x_min, aabb.x_max),
+        pos.y.clamp(aabb.y_min, aabb.y_max),
+    )
+}
+
 pub struct GameState {
     geng: Geng,
     assets: Rc<Assets>,
     camera: Camera2d,
+    arena_bounds: AABB<Coord>,
     player: Player,
     enemies: Vec<Enemy>,
 }
@@ -38,6 +47,7 @@ impl GameState {
         Self {
             geng: geng.clone(),
             assets: assets.clone(),
+            arena_bounds: AABB::from_corners(vec2(-4, -4), vec2(5, 5)),
             camera: Camera2d {
                 center: Vec2::ZERO,
                 rotation: 0.0,
@@ -52,7 +62,7 @@ impl GameState {
     }
 
     pub fn tick(&mut self, player_move: Position) {
-        self.player.position += player_move;
+        self.player.position = clamp_pos(self.player.position + player_move, self.arena_bounds);
     }
 }
 
