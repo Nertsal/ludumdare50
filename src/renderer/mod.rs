@@ -1,19 +1,21 @@
-use geng::{Camera2d, Draw2d};
+use geng::Draw2d;
+
+use model::ActionQueue;
 
 use super::*;
 
-pub struct Renderer<'a, 'f> {
+pub struct Renderer<'a, 'f, C: geng::AbstractCamera2d> {
     geng: &'a Geng,
     assets: &'a Rc<Assets>,
-    camera: &'a Camera2d,
+    camera: &'a C,
     framebuffer: &'a mut ugli::Framebuffer<'f>,
 }
 
-impl<'a, 'f> Renderer<'a, 'f> {
+impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
     pub fn new(
         geng: &'a Geng,
         assets: &'a Rc<Assets>,
-        camera: &'a Camera2d,
+        camera: &'a C,
         framebuffer: &'a mut ugli::Framebuffer<'f>,
     ) -> Self {
         Self {
@@ -30,6 +32,22 @@ impl<'a, 'f> Renderer<'a, 'f> {
             self.framebuffer,
             self.camera,
         );
+    }
+
+    pub fn draw_aabb(&mut self, aabb: AABB<f32>, width: f32, color: Color<f32>) {
+        let corners = aabb.corners();
+        draw_2d::Chain::new(
+            Chain::new(
+                corners
+                    .into_iter()
+                    .chain(std::iter::once(corners[0]))
+                    .collect(),
+            ),
+            width,
+            color,
+            0,
+        )
+        .draw_2d(self.geng, self.framebuffer, self.camera);
     }
 
     pub fn draw_grid(
@@ -56,6 +74,27 @@ impl<'a, 'f> Renderer<'a, 'f> {
                 self.framebuffer,
                 self.camera,
             );
+        }
+    }
+
+    pub fn draw_actions(&mut self, actions: &ActionQueue, action_limit: usize, bounds: AABB<f32>) {
+        if action_limit == 0 {
+            return;
+        }
+
+        self.draw_aabb(bounds, 5.0, Color::GRAY);
+
+        let top_right = bounds.top_right();
+        let single_height = top_right.y / action_limit as f32;
+        let single_top_right = vec2(top_right.x, single_height);
+        let single_aabb = AABB::from_corners(bounds.bottom_left(), single_top_right);
+
+        for (index, action) in actions.iter().enumerate().take(action_limit) {
+            if let Some(_) = action {
+                let aabb = single_aabb.translate(vec2(0.0, single_height * index as f32));
+                let radius = aabb.height().min(aabb.width()) / 2.0;
+                self.draw_circle(aabb.center(), radius, Color::WHITE);
+            }
         }
     }
 }

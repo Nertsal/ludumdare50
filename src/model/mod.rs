@@ -13,6 +13,8 @@ const TILE_SIZE: Vec2<f32> = vec2(1.0, 1.0);
 const UNIT_RADIUS: f32 = 0.25;
 const GRID_WIDTH: f32 = 0.05;
 const GRID_COLOR: Color<f32> = Color::GRAY;
+const ACTIONS_OFFSET: f32 = 25.0;
+const ACTIONS_WIDTH: f32 = 100.0;
 
 struct Player {
     pub color: Color<f32>,
@@ -62,22 +64,25 @@ fn clamp_pos(pos: Position, aabb: AABB<Coord>) -> Position {
     )
 }
 
-enum Action {
+pub enum Action {
     AttackDirect,
 }
 
 #[derive(Default)]
-struct ActionQueue {
+pub struct ActionQueue {
     actions: VecDeque<Option<Action>>,
 }
 
 impl ActionQueue {
+    pub fn iter(&self) -> impl Iterator<Item = &Option<Action>> {
+        self.actions.iter()
+    }
+
     pub fn pop(&mut self) -> Option<Action> {
         self.actions.pop_front().flatten()
     }
 
-    pub fn enqueue(&mut self, action: Action, time: u32) {
-        let time = time as usize;
+    pub fn enqueue(&mut self, action: Action, time: usize) {
         if self.actions.len() <= time {
             for _ in 0..time - self.actions.len() {
                 self.actions.push_back(None);
@@ -159,6 +164,7 @@ impl GameState {
             }
         }
 
+        // Gen next action
         if global_rng().gen_bool(0.1) {
             self.player_actions.enqueue(Action::AttackDirect, 0);
         }
@@ -167,6 +173,7 @@ impl GameState {
 
 impl geng::State for GameState {
     fn draw(&mut self, framebuffer: &mut ugli::Framebuffer) {
+        let framebuffer_size = framebuffer.size().map(|x| x as f32);
         ugli::clear(framebuffer, Some(Color::BLACK), None);
         let mut renderer = Renderer::new(&self.geng, &self.assets, &self.camera, framebuffer);
 
@@ -188,6 +195,26 @@ impl geng::State for GameState {
 
         // Grid
         renderer.draw_grid(self.arena_bounds, TILE_SIZE, GRID_WIDTH, GRID_COLOR);
+
+        let mut renderer = Renderer::new(
+            &self.geng,
+            &self.assets,
+            &geng::PixelPerfectCamera,
+            framebuffer,
+        );
+
+        // Actions
+        renderer.draw_actions(
+            &self.player_actions,
+            5,
+            AABB::from_corners(
+                vec2(
+                    framebuffer_size.x - ACTIONS_WIDTH - ACTIONS_OFFSET,
+                    ACTIONS_OFFSET,
+                ),
+                framebuffer_size.map(|x| x - ACTIONS_OFFSET),
+            ),
+        );
     }
 
     fn handle_event(&mut self, event: geng::Event) {
