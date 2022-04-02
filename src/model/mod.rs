@@ -30,6 +30,14 @@ struct Enemy {
     pub color: Color<f32>,
     pub position: Position,
     pub movement: MovementType,
+    pub is_dead: bool,
+}
+
+type Id = usize;
+
+enum Caster {
+    Player,
+    Enemy { id: Id },
 }
 
 enum MovementType {
@@ -130,11 +138,13 @@ impl GameState {
                     color: Color::RED,
                     position: vec2(5, 5),
                     movement: MovementType::Direct,
+                    is_dead: false,
                 },
                 Enemy {
                     color: Color::GREEN,
                     position: vec2(-4, -4),
                     movement: MovementType::Neighbour,
+                    is_dead: false,
                 },
                 Enemy {
                     color: Color::MAGENTA,
@@ -142,6 +152,7 @@ impl GameState {
                     movement: MovementType::SingleDouble {
                         is_next_single: true,
                     },
+                    is_dead: false,
                 },
             ],
         }
@@ -162,16 +173,36 @@ impl GameState {
 
         // Player actions
         for action in self.player_actions.pop() {
-            match action {
-                Action::AttackDirect => {
-                    warn!("TODO: AttackDirect");
-                }
-            }
+            self.action(Caster::Player, self.player.position, action);
         }
 
         // Gen next action
         if global_rng().gen_bool(0.1) {
             self.player_actions.enqueue(Action::AttackDirect, 4);
+        }
+    }
+
+    fn action(&mut self, caster: Caster, origin: Position, action: Action) {
+        match action {
+            Action::AttackDirect => {
+                let attack_positions =
+                    [vec2(1, 0), vec2(-1, 0), vec2(0, -1), vec2(0, 1)].map(|delta| origin + delta);
+                self.attack_positions(caster, &attack_positions);
+            }
+        }
+    }
+
+    fn attack_positions(&mut self, caster: Caster, positions: &[Position]) {
+        match caster {
+            Caster::Player => {
+                for enemy in &mut self.enemies {
+                    if positions.contains(&enemy.position) {
+                        enemy.is_dead = true;
+                    }
+                }
+                self.enemies.retain(|enemy| !enemy.is_dead);
+            }
+            Caster::Enemy { id } => todo!(),
         }
     }
 }
