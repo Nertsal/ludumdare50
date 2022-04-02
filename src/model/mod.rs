@@ -26,6 +26,30 @@ enum MovementType {
     SingleDouble { isNextSingle: bool },
 }
 
+impl MovementType {
+    pub fn move_towards(&mut self, target: Position) -> Position {
+        match self {
+            Self::Direct => {
+                if target.x.abs() >= target.y.abs() {
+                    vec2(target.x.signum(), 0)
+                } else {
+                    vec2(0, target.y.signum())
+                }
+            }
+            Self::Neighbour => vec2(target.x.signum(), target.y.signum()),
+            Self::SingleDouble { isNextSingle } => {
+                let delta = if *isNextSingle {
+                    Self::Direct.move_towards(target)
+                } else {
+                    Self::Direct.move_towards(target) * 2
+                };
+                *isNextSingle = !*isNextSingle;
+                delta
+            }
+        }
+    }
+}
+
 fn clamp_pos(pos: Position, aabb: AABB<Coord>) -> Position {
     vec2(
         pos.x.clamp(aabb.x_min, aabb.x_max),
@@ -57,12 +81,36 @@ impl GameState {
                 color: Color::BLUE,
                 position: vec2(0, 0),
             },
-            enemies: vec![],
+            enemies: vec![
+                Enemy {
+                    color: Color::RED,
+                    position: vec2(5, 5),
+                    movement: MovementType::Direct,
+                },
+                Enemy {
+                    color: Color::GREEN,
+                    position: vec2(-4, -4),
+                    movement: MovementType::Neighbour,
+                },
+                Enemy {
+                    color: Color::MAGENTA,
+                    position: vec2(-4, 5),
+                    movement: MovementType::SingleDouble { isNextSingle: true },
+                },
+            ],
         }
     }
 
     pub fn tick(&mut self, player_move: Position) {
         self.player.position = clamp_pos(self.player.position + player_move, self.arena_bounds);
+
+        for enemy in &mut self.enemies {
+            let delta = self.player.position - enemy.position;
+            enemy.position = clamp_pos(
+                enemy.position + enemy.movement.move_towards(delta),
+                self.arena_bounds,
+            );
+        }
     }
 }
 
@@ -101,6 +149,9 @@ impl geng::State for GameState {
                 }
                 geng::Key::Up => {
                     self.tick(vec2(0, 1));
+                }
+                geng::Key::Space => {
+                    self.tick(vec2(0, 0));
                 }
                 _ => {}
             },
