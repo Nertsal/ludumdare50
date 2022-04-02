@@ -7,6 +7,8 @@ use super::*;
 use renderer::*;
 
 type Coord = i32;
+type Time = i32;
+type Score = u32;
 type Position = Vec2<Coord>;
 
 // Things in world coordinates
@@ -21,11 +23,13 @@ const ACTIONS_WIDTH: f32 = 100.0;
 const ACTIONS_BORDER_WIDTH: f32 = 5.0;
 const ACTIONS_BORDER_COLOR: Color<f32> = Color::GRAY;
 
+#[derive(Debug, Clone)]
 struct Player {
     pub color: Color<f32>,
     pub position: Position,
 }
 
+#[derive(Debug, Clone)]
 struct Enemy {
     pub color: Color<f32>,
     pub position: Position,
@@ -35,11 +39,13 @@ struct Enemy {
 
 type Id = usize;
 
+#[derive(Debug, Clone)]
 enum Caster {
     Player,
     Enemy { id: Id },
 }
 
+#[derive(Debug, Clone)]
 enum MovementType {
     Direct,
     Neighbour,
@@ -77,6 +83,14 @@ fn clamp_pos(pos: Position, aabb: AABB<Coord>) -> Position {
     )
 }
 
+struct SpawnPrefab {
+    movement: MovementType,
+    cooldown: Time,
+    min_score: Score,
+    next_spawn: Time,
+    color: Color<f32>,
+}
+
 pub enum Action {
     AttackDirect,
 }
@@ -112,10 +126,11 @@ pub struct GameState {
     assets: Rc<Assets>,
     camera: Camera2d,
     arena_bounds: AABB<Coord>,
-    score: u32,
+    score: Score,
     player_actions: ActionQueue,
     player: Player,
     enemies: Vec<Enemy>,
+    spawn_prefabs: Vec<SpawnPrefab>,
 }
 
 impl GameState {
@@ -135,26 +150,30 @@ impl GameState {
                 color: Color::BLUE,
                 position: vec2(0, 0),
             },
-            enemies: vec![
-                Enemy {
-                    color: Color::RED,
-                    position: vec2(5, 5),
+            enemies: vec![],
+            spawn_prefabs: vec![
+                SpawnPrefab {
                     movement: MovementType::Direct,
-                    is_dead: false,
+                    cooldown: 2,
+                    min_score: 0,
+                    next_spawn: 1,
+                    color: Color::RED,
                 },
-                Enemy {
-                    color: Color::GREEN,
-                    position: vec2(-4, -4),
-                    movement: MovementType::Neighbour,
-                    is_dead: false,
-                },
-                Enemy {
-                    color: Color::MAGENTA,
-                    position: vec2(-4, 5),
+                SpawnPrefab {
                     movement: MovementType::SingleDouble {
                         is_next_single: true,
                     },
-                    is_dead: false,
+                    cooldown: 6,
+                    min_score: 10,
+                    next_spawn: 1,
+                    color: Color::GREEN,
+                },
+                SpawnPrefab {
+                    movement: MovementType::Neighbour,
+                    cooldown: 6,
+                    min_score: 60,
+                    next_spawn: 1,
+                    color: Color::MAGENTA,
                 },
             ],
         }
@@ -186,6 +205,41 @@ impl GameState {
         if global_rng().gen_bool(0.1) {
             self.player_actions.enqueue(Action::AttackDirect, 4);
         }
+
+        // Spawn new enemies
+        for prefab in self
+            .spawn_prefabs
+            .iter_mut()
+            .filter(|prefab| self.score >= prefab.min_score)
+        {
+            prefab.next_spawn -= 1;
+            if prefab.next_spawn <= 0 {
+                prefab.next_spawn = prefab.cooldown;
+                let spawn_points = self.arena_bounds.corners();
+                let &spawn_point = spawn_points
+                    .choose(&mut global_rng())
+                    .expect("Failed to find a spawn point");
+                let enemy = Enemy {
+                    color: prefab.color,
+                    position: spawn_point,
+                    movement: prefab.movement.clone(),
+                    is_dead: false,
+                };
+                self.enemies.push(enemy);
+            }
+        }
+    }
+
+    fn get_in_point(&self, position: Position) -> Option<Caster> {
+        let mut units = std::iter::once((Caster::Player, self.player.position)).chain(
+            self.enemies
+                .iter()
+                .enumerate()
+                .map(|(id, enemy)| (Caster::Enemy { id }, enemy.position)),
+        );
+        units
+            .find(|(_, unit_pos)| *unit_pos == position)
+            .map(|(caster, _)| caster)
     }
 
     fn action(&mut self, caster: Caster, origin: Position, action: Action) {
