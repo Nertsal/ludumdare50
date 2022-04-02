@@ -112,6 +112,7 @@ pub struct GameState {
     assets: Rc<Assets>,
     camera: Camera2d,
     arena_bounds: AABB<Coord>,
+    score: u32,
     player_actions: ActionQueue,
     player: Player,
     enemies: Vec<Enemy>,
@@ -123,6 +124,7 @@ impl GameState {
             geng: geng.clone(),
             assets: assets.clone(),
             arena_bounds: AABB::from_corners(vec2(-4, -4), vec2(5, 5)),
+            score: 0,
             camera: Camera2d {
                 center: Vec2::ZERO,
                 rotation: 0.0,
@@ -162,6 +164,8 @@ impl GameState {
         // Move player
         self.player.position = clamp_pos(self.player.position + player_move, self.arena_bounds);
 
+        // self.player_collide();
+
         // Move enemies
         for enemy in &mut self.enemies {
             let delta = self.player.position - enemy.position;
@@ -170,6 +174,8 @@ impl GameState {
                 self.arena_bounds,
             );
         }
+
+        // self.player_collide();
 
         // Player actions
         for action in self.player_actions.pop() {
@@ -200,7 +206,12 @@ impl GameState {
                         enemy.is_dead = true;
                     }
                 }
-                self.enemies.retain(|enemy| !enemy.is_dead);
+                self.enemies.retain(|enemy| {
+                    if enemy.is_dead {
+                        self.score += 1;
+                    }
+                    !enemy.is_dead
+                });
             }
             Caster::Enemy { id } => todo!(),
         }
@@ -258,6 +269,15 @@ impl geng::State for GameState {
             ),
             ACTIONS_BORDER_WIDTH,
             ACTIONS_BORDER_COLOR,
+        );
+
+        // Score text
+        renderer.draw_text(
+            &format!("Score: {}", self.score),
+            vec2(10.0, framebuffer_size.y - 10.0),
+            vec2(0.0, 1.0),
+            20.0,
+            Color::GRAY,
         );
     }
 

@@ -112,4 +112,19 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
             }
         }
     }
+
+    pub fn draw_text(
+        &mut self,
+        text: &str,
+        pos: Vec2<f32>,
+        alignment: Vec2<f32>,
+        font_size: f32,
+        color: Color<f32>,
+    ) {
+        draw_2d::Text::unit(self.geng.default_font().clone(), text, color)
+            .scale_uniform(font_size)
+            .align_bounding_box(alignment)
+            .translate(pos)
+            .draw_2d(self.geng, self.framebuffer, self.camera);
+    }
 }
