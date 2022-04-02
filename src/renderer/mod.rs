@@ -142,21 +142,26 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
         )
         .draw_2d(self.geng, self.framebuffer, self.camera);
         for pos in attack.attack_positions(Vec2::ZERO) {
-            let aabb = AABB::point(tile_size * pos.map(|x| x as f32) + aabb.center())
-                .extend_uniform(scale / 2.0 - scale * 0.2);
-            draw_2d::Segment::new(
-                Segment::new(aabb.bottom_left(), aabb.top_right()),
-                scale * 0.1,
-                Color::RED,
-            )
-            .draw_2d(self.geng, self.framebuffer, self.camera);
-            draw_2d::Segment::new(
-                Segment::new(aabb.top_left(), aabb.bottom_right()),
-                scale * 0.1,
-                Color::RED,
-            )
-            .draw_2d(self.geng, self.framebuffer, self.camera);
+            let aabb = model::grid_cell_aabb(pos, tile_size)
+                .translate(aabb.center())
+                .extend_uniform(-scale * 0.2);
+            self.draw_damage(aabb, scale * 0.1, Color::RED)
         }
+    }
+
+    pub fn draw_damage(&mut self, aabb: AABB<f32>, width: f32, color: Color<f32>) {
+        draw_2d::Segment::new(
+            Segment::new(aabb.bottom_left(), aabb.top_right()),
+            width,
+            color,
+        )
+        .draw_2d(self.geng, self.framebuffer, self.camera);
+        draw_2d::Segment::new(
+            Segment::new(aabb.top_left(), aabb.bottom_right()),
+            width,
+            color,
+        )
+        .draw_2d(self.geng, self.framebuffer, self.camera);
     }
 
     pub fn draw_text(

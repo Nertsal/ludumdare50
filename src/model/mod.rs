@@ -17,12 +17,15 @@ const TILE_SIZE: Vec2<f32> = vec2(1.0, 1.0);
 const UNIT_RADIUS: f32 = 0.25;
 const GRID_WIDTH: f32 = 0.05;
 const GRID_COLOR: Color<f32> = Color::GRAY;
+const DAMAGE_WIDTH: f32 = 0.025;
+const DAMAGE_COLOR: Color<f32> = Color::RED;
+const DAMAGE_EXTRA_SPACE: f32 = 0.25;
 
 // Things in screen coordinates
-const ACTIONS_OFFSET: f32 = 25.0;
-const ACTIONS_WIDTH: f32 = 300.0;
-const ACTIONS_BORDER_WIDTH: f32 = 5.0;
-const ACTIONS_BORDER_COLOR: Color<f32> = Color::GRAY;
+const ATTACKS_OFFSET: f32 = 25.0;
+const ATTACKS_WIDTH: f32 = 300.0;
+const ATTACKS_BORDER_WIDTH: f32 = 5.0;
+const ATTACKS_BORDER_COLOR: Color<f32> = Color::GRAY;
 
 #[derive(Debug, Clone)]
 struct Player {
@@ -85,6 +88,10 @@ fn clamp_pos(pos: Position, aabb: AABB<Coord>) -> Position {
         pos.x.clamp(aabb.x_min, aabb.x_max),
         pos.y.clamp(aabb.y_min, aabb.y_max),
     )
+}
+
+pub fn grid_cell_aabb(cell_pos: Position, tile_size: Vec2<f32>) -> AABB<f32> {
+    AABB::point(cell_pos.map(|x| x as f32) * tile_size).extend_symmetric(tile_size / 2.0)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -153,6 +160,7 @@ pub struct GameState {
     player_attacks: Vec<Attack>,
     player: Player,
     enemies: Vec<Enemy>,
+    damages: Vec<Position>,
     spawn_prefabs: HashMap<EnemyType, SpawnPrefab>,
 }
 
@@ -174,6 +182,7 @@ impl GameState {
                 render_pos: vec2(0.0, 0.0),
             },
             enemies: vec![],
+            damages: vec![],
             player_attacks: vec![
                 Attack::new(2, [vec2(1, 0)]),
                 Attack::new(2, [vec2(1, 0), vec2(2, 1)]),
@@ -232,6 +241,8 @@ impl GameState {
     }
 
     pub fn tick(&mut self, player_move: Position) {
+        self.damages = vec![];
+
         // Move player
         self.player.position = clamp_pos(self.player.position + player_move, self.arena_bounds);
 
@@ -309,6 +320,7 @@ impl GameState {
     }
 
     fn attack_positions(&mut self, caster: Caster, positions: &[Position]) {
+        self.damages.extend(positions);
         match caster {
             Caster::Player => {
                 for enemy in &mut self.enemies {
@@ -362,6 +374,12 @@ impl geng::State for GameState {
             self.player.color,
         );
 
+        // Damage
+        for &pos in &self.damages {
+            let aabb = grid_cell_aabb(pos, TILE_SIZE).extend_uniform(-DAMAGE_EXTRA_SPACE);
+            renderer.draw_damage(aabb, DAMAGE_WIDTH, DAMAGE_COLOR);
+        }
+
         // Grid
         renderer.draw_grid(
             self.arena_bounds,
@@ -378,19 +396,19 @@ impl geng::State for GameState {
             framebuffer,
         );
 
-        // Actions
+        // Attacks
         renderer.draw_attacks(
             &self.player_attacks,
             4,
             AABB::from_corners(
                 vec2(
-                    framebuffer_size.x - ACTIONS_WIDTH - ACTIONS_OFFSET,
-                    ACTIONS_OFFSET,
+                    framebuffer_size.x - ATTACKS_WIDTH - ATTACKS_OFFSET,
+                    ATTACKS_OFFSET,
                 ),
-                framebuffer_size.map(|x| x - ACTIONS_OFFSET),
+                framebuffer_size.map(|x| x - ATTACKS_OFFSET),
             ),
-            ACTIONS_BORDER_WIDTH,
-            ACTIONS_BORDER_COLOR,
+            ATTACKS_BORDER_WIDTH,
+            ATTACKS_BORDER_COLOR,
         );
 
         // Score text
