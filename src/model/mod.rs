@@ -219,26 +219,53 @@ impl UpgradeInfo {
 
 enum Upgrade {
     Global {
-        upgrade: GlobalUpgrade,
         info: UpgradeInfo,
         requirement: Score,
     },
     Attack {
-        upgrade: AttackUpgrade,
         info: Vec<UpgradeInfo>,
     },
 }
 
-enum GlobalUpgrade {
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+enum UpgradeType {
     NewAttack,
     IncUltRadius,
     ReduceUltCooldown,
     IncDeathTimer,
-}
-
-enum AttackUpgrade {
     ReduceAttackCooldown,
     UpgradeAttack,
+}
+
+struct UpgradeMenu {
+    lvl_ups_left: usize,
+    options: Vec<(UpgradeType, Vec<usize>)>,
+}
+
+struct Experience {
+    level: u32,
+    exp: Score,
+    exp_to_next_lvl: Score,
+}
+
+impl Experience {
+    pub fn new() -> Self {
+        Self {
+            level: 0,
+            exp: 0,
+            exp_to_next_lvl: 10,
+        }
+    }
+
+    pub fn add_exp(&mut self, exp: Score) -> usize {
+        self.exp += exp;
+        let mut lvl_ups = 0;
+        while self.exp >= self.exp_to_next_lvl {
+            self.exp -= self.exp_to_next_lvl;
+            lvl_ups += 1;
+        }
+        lvl_ups
+    }
 }
 
 pub struct GameState {
@@ -248,14 +275,17 @@ pub struct GameState {
     arena_bounds: AABB<Coord>,
     highscore: AutoSave<Score>,
     score: Score,
+    experience: Experience,
     player_attacks: Vec<Attack>,
+    potential_attacks: Vec<Attack>,
     player_ultimate: Teleport,
     using_ultimate: Option<Position>,
     player: Player,
     enemies: Vec<Enemy>,
     damages: Vec<Position>,
     spawn_prefabs: HashMap<EnemyType, SpawnPrefab>,
-    upgrades: Vec<Upgrade>,
+    upgrades: HashMap<UpgradeType, Upgrade>,
+    upgrade_menu: Option<UpgradeMenu>,
 }
 
 impl GameState {
@@ -266,7 +296,9 @@ impl GameState {
             arena_bounds: AABB::from_corners(vec2(-4, -4), vec2(5, 5)),
             highscore: AutoSave::load(static_path().join("highscore.json").to_str().unwrap()),
             score: 0,
+            experience: Experience::new(),
             using_ultimate: None,
+            upgrade_menu: None,
             camera: Camera2d {
                 center: Vec2::ZERO,
                 rotation: 0.0,
@@ -279,38 +311,50 @@ impl GameState {
             },
             enemies: vec![],
             damages: vec![],
-            player_attacks: vec![
-                Attack::new(2, [vec2(1, 0)]),
-                // Attack::new(2, [vec2(1, 0), vec2(2, 1)]),
-                // Attack::new(2, [vec2(1, 0), vec2(2, 0), vec2(1, 1)]),
-                // Attack::new(2, [vec2(1, 0), vec2(2, 0), vec2(3, 0), vec2(3, 1)]),
+            player_attacks: vec![Attack::new(2, [vec2(1, 0)])],
+            potential_attacks: vec![
+                Attack::new(2, [vec2(1, 0), vec2(2, 1)]),
+                Attack::new(2, [vec2(1, 0), vec2(2, 0), vec2(1, 1)]),
+                Attack::new(2, [vec2(1, 0), vec2(2, 0), vec2(3, 0), vec2(3, 1)]),
             ],
             player_ultimate: Teleport::new(5, 2),
-            upgrades: vec![
-                Upgrade::Attack {
-                    upgrade: AttackUpgrade::ReduceAttackCooldown,
-                    info: vec![UpgradeInfo::new(3)],
-                },
-                Upgrade::Attack {
-                    upgrade: AttackUpgrade::UpgradeAttack,
-                    info: vec![UpgradeInfo::new(2)],
-                },
-                Upgrade::Global {
-                    upgrade: GlobalUpgrade::NewAttack,
-                    info: UpgradeInfo::new(3),
-                    requirement: 0,
-                },
-                Upgrade::Global {
-                    upgrade: GlobalUpgrade::IncUltRadius,
-                    info: UpgradeInfo::new(2),
-                    requirement: 30,
-                },
-                Upgrade::Global {
-                    upgrade: GlobalUpgrade::IncDeathTimer,
-                    info: UpgradeInfo::new(2),
-                    requirement: 0,
-                },
-            ],
+            upgrades: [
+                (
+                    UpgradeType::ReduceAttackCooldown,
+                    Upgrade::Attack {
+                        info: vec![UpgradeInfo::new(3)],
+                    },
+                ),
+                (
+                    UpgradeType::UpgradeAttack,
+                    Upgrade::Attack {
+                        info: vec![UpgradeInfo::new(2)],
+                    },
+                ),
+                (
+                    UpgradeType::NewAttack,
+                    Upgrade::Global {
+                        info: UpgradeInfo::new(3),
+                        requirement: 0,
+                    },
+                ),
+                (
+                    UpgradeType::IncUltRadius,
+                    Upgrade::Global {
+                        info: UpgradeInfo::new(2),
+                        requirement: 30,
+                    },
+                ),
+                (
+                    UpgradeType::IncDeathTimer,
+                    Upgrade::Global {
+                        info: UpgradeInfo::new(2),
+                        requirement: 0,
+                    },
+                ),
+            ]
+            .into_iter()
+            .collect(),
             spawn_prefabs: [
                 (
                     EnemyType::Attacker,
@@ -459,10 +503,12 @@ impl GameState {
                         enemy.is_dead = true;
                     }
                 }
+                let mut lvl_ups = 0;
                 self.enemies.retain(|enemy| {
                     if enemy.is_dead {
                         self.score += 1;
                         *self.highscore = (*self.highscore).max(self.score);
+                        lvl_ups += self.experience.add_exp(1);
                         self.spawn_prefabs
                             .get_mut(&enemy.typ)
                             .unwrap()
@@ -470,6 +516,7 @@ impl GameState {
                     }
                     !enemy.is_dead
                 });
+                self.upgrade(lvl_ups);
             }
             Caster::Enemy { id } => todo!(),
         }
@@ -481,6 +528,41 @@ impl GameState {
         } else if self.player_ultimate.action.is_ready() {
             self.using_ultimate = Some(self.player.position);
             self.player_ultimate.action.set_on_cooldown();
+        }
+    }
+
+    fn upgrade(&mut self, lvl_ups: usize) {
+        if lvl_ups > 0 {
+            let options = self
+                .upgrades
+                .iter()
+                .filter_map(|(&typ, upgrade)| match upgrade {
+                    Upgrade::Global { info, requirement } => {
+                        if self.score >= *requirement && info.current < info.max {
+                            Some((typ, vec![]))
+                        } else {
+                            None
+                        }
+                    }
+                    Upgrade::Attack { info } => {
+                        let options = info
+                            .iter()
+                            .enumerate()
+                            .filter(|(_, info)| info.current < info.max)
+                            .map(|(i, _)| i)
+                            .collect::<Vec<_>>();
+                        if options.is_empty() {
+                            None
+                        } else {
+                            Some((typ, options))
+                        }
+                    }
+                })
+                .collect();
+            self.upgrade_menu = Some(UpgradeMenu {
+                lvl_ups_left: lvl_ups,
+                options,
+            });
         }
     }
 }
