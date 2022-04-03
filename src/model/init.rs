@@ -167,6 +167,13 @@ impl GameState {
                     },
                 ),
                 (
+                    UpgradeType::ReduceUltCooldown,
+                    Upgrade::Global {
+                        info: UpgradeInfo::new(2),
+                        requirement: 100,
+                    },
+                ),
+                (
                     UpgradeType::IncDeathTimer,
                     Upgrade::Global {
                         info: UpgradeInfo::new(2),

@@ -280,25 +280,3 @@ pub fn wrap_coord(mut pos: Coord, bounds: Vec2<Coord>) -> (Coord, bool) {
 pub fn grid_cell_aabb(cell_pos: Position, tile_size: Vec2<f32>) -> AABB<f32> {
     AABB::point(cell_pos.map(|x| x as f32) * tile_size).extend_symmetric(tile_size / 2.0)
 }
-
-pub fn is_on_inner_border(pos: Position, bounds: AABB<Coord>) -> Option<Vec2<Coord>> {
-    let x = if pos.x == bounds.x_min {
-        -1
-    } else if pos.x == bounds.x_max {
-        1
-    } else {
-        0
-    };
-    let y = if pos.y == bounds.y_min {
-        -1
-    } else if pos.y == bounds.y_max {
-        1
-    } else {
-        0
-    };
-    if x == 0 && y == 0 {
-        None
-    } else {
-        Some(vec2(x, y))
-    }
-}
