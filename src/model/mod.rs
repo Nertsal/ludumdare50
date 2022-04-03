@@ -203,6 +203,44 @@ impl Teleport {
     }
 }
 
+struct UpgradeInfo {
+    current: usize,
+    max: usize,
+}
+
+impl UpgradeInfo {
+    pub fn new(max_upgrades: usize) -> Self {
+        Self {
+            current: 0,
+            max: max_upgrades,
+        }
+    }
+}
+
+enum Upgrade {
+    Global {
+        upgrade: GlobalUpgrade,
+        info: UpgradeInfo,
+        requirement: Score,
+    },
+    Attack {
+        upgrade: AttackUpgrade,
+        info: Vec<UpgradeInfo>,
+    },
+}
+
+enum GlobalUpgrade {
+    NewAttack,
+    IncUltRadius,
+    ReduceUltCooldown,
+    IncDeathTimer,
+}
+
+enum AttackUpgrade {
+    ReduceAttackCooldown,
+    UpgradeAttack,
+}
+
 pub struct GameState {
     geng: Geng,
     assets: Rc<Assets>,
@@ -217,6 +255,7 @@ pub struct GameState {
     enemies: Vec<Enemy>,
     damages: Vec<Position>,
     spawn_prefabs: HashMap<EnemyType, SpawnPrefab>,
+    upgrades: Vec<Upgrade>,
 }
 
 impl GameState {
@@ -247,6 +286,31 @@ impl GameState {
                 // Attack::new(2, [vec2(1, 0), vec2(2, 0), vec2(3, 0), vec2(3, 1)]),
             ],
             player_ultimate: Teleport::new(5, 2),
+            upgrades: vec![
+                Upgrade::Attack {
+                    upgrade: AttackUpgrade::ReduceAttackCooldown,
+                    info: vec![UpgradeInfo::new(3)],
+                },
+                Upgrade::Attack {
+                    upgrade: AttackUpgrade::UpgradeAttack,
+                    info: vec![UpgradeInfo::new(2)],
+                },
+                Upgrade::Global {
+                    upgrade: GlobalUpgrade::NewAttack,
+                    info: UpgradeInfo::new(3),
+                    requirement: 0,
+                },
+                Upgrade::Global {
+                    upgrade: GlobalUpgrade::IncUltRadius,
+                    info: UpgradeInfo::new(2),
+                    requirement: 30,
+                },
+                Upgrade::Global {
+                    upgrade: GlobalUpgrade::IncDeathTimer,
+                    info: UpgradeInfo::new(2),
+                    requirement: 0,
+                },
+            ],
             spawn_prefabs: [
                 (
                     EnemyType::Attacker,
