@@ -26,6 +26,7 @@ const ATTACKS_OFFSET: f32 = 25.0;
 const ATTACKS_WIDTH: f32 = 300.0;
 const ATTACKS_BORDER_WIDTH: f32 = 5.0;
 const ATTACKS_BORDER_COLOR: Color<f32> = Color::GRAY;
+const ULTIMATE_HEIGHT: f32 = 300.0;
 
 #[derive(Debug, Clone)]
 struct Player {
@@ -125,18 +126,35 @@ impl SpawnPrefab {
     }
 }
 
-pub struct Attack {
-    pattern: Vec<Position>,
+pub struct Action {
     cooldown: Time,
-    next_attack: Time,
+    next: Time,
+}
+
+impl Action {
+    pub fn new(cooldown: Time) -> Self {
+        Self {
+            cooldown,
+            next: cooldown,
+        }
+    }
+
+    pub fn update(&mut self, delta_time: Time) -> bool {
+        self.next -= delta_time;
+        self.next <= 0
+    }
+}
+
+pub struct Attack {
+    action: Action,
+    pattern: Vec<Position>,
 }
 
 impl Attack {
     pub fn new(cooldown: Time, pattern: impl IntoIterator<Item = Position>) -> Self {
         Self {
+            action: Action::new(cooldown),
             pattern: pattern.into_iter().collect(),
-            cooldown,
-            next_attack: 0,
         }
     }
 
@@ -151,6 +169,20 @@ impl Attack {
     }
 }
 
+pub struct Teleport {
+    action: Action,
+    pub radius: Coord,
+}
+
+impl Teleport {
+    pub fn new(cooldown: Time, radius: Coord) -> Self {
+        Self {
+            action: Action::new(cooldown),
+            radius,
+        }
+    }
+}
+
 pub struct GameState {
     geng: Geng,
     assets: Rc<Assets>,
@@ -159,6 +191,7 @@ pub struct GameState {
     highscore: AutoSave<Score>,
     score: Score,
     player_attacks: Vec<Attack>,
+    player_ultimate: Teleport,
     player: Player,
     enemies: Vec<Enemy>,
     damages: Vec<Position>,
@@ -191,6 +224,7 @@ impl GameState {
                 // Attack::new(2, [vec2(1, 0), vec2(2, 0), vec2(1, 1)]),
                 // Attack::new(2, [vec2(1, 0), vec2(2, 0), vec2(3, 0), vec2(3, 1)]),
             ],
+            player_ultimate: Teleport::new(5, 2),
             spawn_prefabs: [
                 (
                     EnemyType::Attacker,
@@ -264,9 +298,8 @@ impl GameState {
         // Player actions
         let mut attack_positions = Vec::new();
         for attack in &mut self.player_attacks {
-            attack.next_attack -= 1;
-            if attack.next_attack <= 0 {
-                attack.next_attack = attack.cooldown;
+            if attack.action.update(1) {
+                attack.action.next = attack.action.cooldown;
                 attack_positions.extend(attack.attack_positions(self.player.position));
             }
         }
@@ -380,7 +413,7 @@ impl geng::State for GameState {
         // Damage
         for &pos in &self.damages {
             let aabb = grid_cell_aabb(pos, TILE_SIZE).extend_uniform(-DAMAGE_EXTRA_SPACE);
-            renderer.draw_damage(aabb, DAMAGE_WIDTH, DAMAGE_COLOR);
+            renderer.draw_cross(aabb, DAMAGE_WIDTH, DAMAGE_COLOR);
         }
 
         // Grid
@@ -400,18 +433,32 @@ impl geng::State for GameState {
         );
 
         // Attacks
+        let attacks_aabb = AABB::from_corners(
+            vec2(
+                framebuffer_size.x - ATTACKS_WIDTH - ATTACKS_OFFSET,
+                ATTACKS_OFFSET + ULTIMATE_HEIGHT,
+            ),
+            framebuffer_size.map(|x| x - ATTACKS_OFFSET),
+        );
         renderer.draw_attacks(
             &self.player_attacks,
             4,
-            AABB::from_corners(
-                vec2(
-                    framebuffer_size.x - ATTACKS_WIDTH - ATTACKS_OFFSET,
-                    ATTACKS_OFFSET,
-                ),
-                framebuffer_size.map(|x| x - ATTACKS_OFFSET),
-            ),
+            attacks_aabb,
             ATTACKS_BORDER_WIDTH,
             ATTACKS_BORDER_COLOR,
+        );
+
+        // Ultimate
+        let ultimate_aabb = AABB::from_corners(
+            attacks_aabb.bottom_left(),
+            vec2(framebuffer_size.x - ATTACKS_OFFSET, ATTACKS_OFFSET),
+        );
+        renderer.draw_ultimate(
+            &self.player_ultimate,
+            ultimate_aabb,
+            ATTACKS_BORDER_WIDTH,
+            ATTACKS_BORDER_COLOR,
+            10.0,
         );
 
         // Score text

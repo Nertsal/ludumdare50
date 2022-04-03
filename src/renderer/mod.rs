@@ -1,6 +1,6 @@
 use geng::Draw2d;
 
-use crate::model::Attack;
+use crate::model::{Attack, Teleport};
 
 use super::*;
 
@@ -28,6 +28,20 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
 
     pub fn draw_circle(&mut self, center: Vec2<f32>, radius: f32, color: Color<f32>) {
         draw_2d::Ellipse::circle(center, radius, color).draw_2d(
+            self.geng,
+            self.framebuffer,
+            self.camera,
+        );
+    }
+
+    pub fn draw_circle_with_cut(
+        &mut self,
+        center: Vec2<f32>,
+        inner_radius: f32,
+        radius: f32,
+        color: Color<f32>,
+    ) {
+        draw_2d::Ellipse::circle_with_cut(center, inner_radius, radius, color).draw_2d(
             self.geng,
             self.framebuffer,
             self.camera,
@@ -117,13 +131,8 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
                 .attack_positions(Vec2::ZERO)
                 .chain(std::iter::once(Vec2::ZERO)),
         );
-        // let max_half_width = (boundary.x_max as f32 + 0.5).max(-boundary.x_min as f32 + 0.5);
-        // let max_half_height = (boundary.y_max as f32 + 0.5).max(-boundary.y_min as f32 + 0.5);
-        // let scale =
-        //     (aabb.width() / 2.0 / max_half_width).min(aabb.height() / 2.0 / max_half_height);
-        let scale = aabb.size() / boundary.size().map(|x| x as f32 + 1.0);
-        let scale = scale.x.min(scale.y);
-        let aabb = aabb.translate(-boundary.map(|x| x as f32).center() * scale);
+        let (scale, offset) = scale_align_aabb(boundary.map(|x| x as f32), aabb);
+        let aabb = aabb.translate(offset);
 
         let tile_size = vec2(scale, scale);
         self.draw_grid(
@@ -134,22 +143,71 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
             Color::GRAY,
         );
 
-        draw_2d::Ellipse::circle_with_cut(
+        self.draw_circle_with_cut(
             aabb.center(),
             scale / 2.0 * 0.7,
             scale / 2.0 * 0.8,
             model::PLAYER_COLOR,
-        )
-        .draw_2d(self.geng, self.framebuffer, self.camera);
+        );
         for pos in attack.attack_positions(Vec2::ZERO) {
             let aabb = model::grid_cell_aabb(pos, tile_size)
                 .translate(aabb.center())
                 .extend_uniform(-scale * 0.2);
-            self.draw_damage(aabb, scale * 0.1, Color::RED)
+            self.draw_cross(aabb, scale * 0.1, Color::RED)
         }
     }
 
-    pub fn draw_damage(&mut self, aabb: AABB<f32>, width: f32, color: Color<f32>) {
+    pub fn draw_ultimate(
+        &mut self,
+        ultimate: &Teleport,
+        aabb: AABB<f32>,
+        border_width: f32,
+        border_color: Color<f32>,
+        font_size: f32,
+    ) {
+        let aabb = aabb.extend_up(-font_size);
+        self.draw_text(
+            "ULTIMATE",
+            vec2(aabb.center().x, aabb.top_left().y),
+            vec2(0.5, 1.0),
+            font_size,
+            Color::MAGENTA,
+        );
+        let aabb = aabb.extend_up(-2.5 * font_size);
+
+        let boundary = AABB::ZERO.extend_uniform(ultimate.radius);
+        let (scale, offset) = scale_align_aabb(boundary.map(|x| x as f32), aabb);
+        let aabb = aabb.translate(offset);
+
+        let tile_size = vec2(scale, scale);
+        self.draw_grid(
+            boundary,
+            tile_size,
+            aabb.center() - tile_size / 2.0,
+            border_width,
+            border_color,
+        );
+
+        self.draw_circle_with_cut(
+            aabb.center(),
+            scale / 2.0 * 0.7,
+            scale / 2.0 * 0.8,
+            model::PLAYER_COLOR,
+        );
+        for pos in (boundary.x_min..=boundary.x_max)
+            .flat_map(|x| (boundary.y_min..=boundary.y_max).map(move |y| vec2(x, y)))
+            .filter(|pos| {
+                *pos != Vec2::ZERO
+                    && pos.x.abs() <= ultimate.radius
+                    && pos.y.abs() <= ultimate.radius
+            })
+            .map(|pos| model::grid_cell_aabb(pos, tile_size).center())
+        {
+            self.draw_circle(pos + aabb.center(), scale * 0.1, Color::MAGENTA);
+        }
+    }
+
+    pub fn draw_cross(&mut self, aabb: AABB<f32>, width: f32, color: Color<f32>) {
         draw_2d::Segment::new(
             Segment::new(aabb.bottom_left(), aabb.top_right()),
             width,
@@ -178,4 +236,11 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
             .translate(pos)
             .draw_2d(self.geng, self.framebuffer, self.camera);
     }
+}
+
+fn scale_align_aabb(aabb: AABB<f32>, target: AABB<f32>) -> (f32, Vec2<f32>) {
+    let scale = target.size() / aabb.size().map(|x| x as f32 + 1.0);
+    let scale = scale.x.min(scale.y);
+    let offset = -aabb.center() * scale;
+    (scale, offset)
 }
