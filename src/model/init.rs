@@ -1,0 +1,229 @@
+use super::*;
+
+impl GameState {
+    pub fn new(geng: &Geng, assets: &Rc<Assets>) -> Self {
+        Self {
+            geng: geng.clone(),
+            assets: assets.clone(),
+            arena_bounds: AABB::from_corners(vec2(-4, -4), vec2(5, 5)),
+            highscore: AutoSave::load(static_path().join("highscore.json").to_str().unwrap()),
+            score: 0,
+            experience: Experience::new(),
+            using_ultimate: None,
+            upgrade_menu: None,
+            camera: Camera2d {
+                center: Vec2::ZERO,
+                rotation: 0.0,
+                fov: 15.0,
+            },
+            player: Player {
+                color: PLAYER_COLOR,
+                position: vec2(0, 0),
+                render_pos: vec2(0.0, 0.0),
+            },
+            enemies: vec![],
+            damages: vec![],
+            player_attacks: vec![Attack::new(
+                2,
+                [vec2(1, 0)],
+                Some(Attack::new(
+                    2,
+                    [vec2(1, 0), vec2(2, 0)],
+                    Some(Attack::new(2, [vec2(1, 0), vec2(2, 0), vec2(3, 0)], None)),
+                )),
+            )],
+            potential_attacks: vec![
+                Attack::new(
+                    2,
+                    [vec2(1, 0), vec2(2, 1)],
+                    Some(Attack::new(
+                        2,
+                        [vec2(1, 0), vec2(2, 1), vec2(2, -1)],
+                        Some(Attack::new(
+                            2,
+                            [vec2(1, 0), vec2(2, 1), vec2(2, -1), vec2(2, 0)],
+                            None,
+                        )),
+                    )),
+                ),
+                Attack::new(
+                    2,
+                    [vec2(1, 0), vec2(2, 0), vec2(1, 1)],
+                    Some(Attack::new(
+                        2,
+                        [vec2(1, 0), vec2(2, 0), vec2(1, 1), vec2(1, -1)],
+                        Some(Attack::new(
+                            2,
+                            [vec2(1, 0), vec2(2, 0), vec2(1, 1), vec2(1, -1), vec2(3, 1)],
+                            None,
+                        )),
+                    )),
+                ),
+                Attack::new(
+                    2,
+                    [vec2(1, 0), vec2(2, 0), vec2(3, 0), vec2(3, 1)],
+                    Some(Attack::new(
+                        2,
+                        [vec2(1, 0), vec2(2, 0), vec2(3, 0), vec2(3, 1), vec2(3, -1)],
+                        Some(Attack::new(
+                            2,
+                            [
+                                vec2(1, 0),
+                                vec2(2, 0),
+                                vec2(3, 0),
+                                vec2(3, 1),
+                                vec2(3, -1),
+                                vec2(4, 1),
+                                vec2(4, -1),
+                            ],
+                            None,
+                        )),
+                    )),
+                ),
+                Attack::new(
+                    2,
+                    [vec2(1, 0), vec2(2, 1), vec2(2, 0), vec2(2, -1)],
+                    Some(Attack::new(
+                        2,
+                        [
+                            vec2(1, 0),
+                            vec2(2, 1),
+                            vec2(2, 0),
+                            vec2(2, -1),
+                            vec2(3, 1),
+                            vec2(3, -1),
+                        ],
+                        Some(Attack::new(
+                            2,
+                            [
+                                vec2(1, 0),
+                                vec2(2, 1),
+                                vec2(2, 0),
+                                vec2(2, -1),
+                                vec2(3, 1),
+                                vec2(3, -1),
+                                vec2(4, 0),
+                            ],
+                            None,
+                        )),
+                    )),
+                ),
+                Attack::new(
+                    2,
+                    [vec2(1, 1), vec2(1, -1), vec2(2, 0), vec2(3, 0)],
+                    Some(Attack::new(
+                        2,
+                        [
+                            vec2(1, 1),
+                            vec2(1, -1),
+                            vec2(2, 0),
+                            vec2(3, 0),
+                            vec2(4, 1),
+                            vec2(4, -1),
+                        ],
+                        Some(Attack::new(
+                            2,
+                            [
+                                vec2(1, 1),
+                                vec2(1, -1),
+                                vec2(2, 0),
+                                vec2(3, 0),
+                                vec2(4, 1),
+                                vec2(4, -1),
+                                vec2(4, 0),
+                                vec2(5, 0),
+                            ],
+                            None,
+                        )),
+                    )),
+                ),
+            ],
+            player_ultimate: Teleport::new(5, 2),
+            upgrades: [
+                (
+                    UpgradeType::ReduceAttackCooldown,
+                    Upgrade::Attack {
+                        info: vec![UpgradeInfo::new(3)],
+                    },
+                ),
+                (
+                    UpgradeType::UpgradeAttack,
+                    Upgrade::Attack {
+                        info: vec![UpgradeInfo::new(2)],
+                    },
+                ),
+                (
+                    UpgradeType::NewAttack,
+                    Upgrade::Global {
+                        info: UpgradeInfo::new(3),
+                        requirement: 0,
+                    },
+                ),
+                (
+                    UpgradeType::IncUltRadius,
+                    Upgrade::Global {
+                        info: UpgradeInfo::new(2),
+                        requirement: 30,
+                    },
+                ),
+                (
+                    UpgradeType::IncDeathTimer,
+                    Upgrade::Global {
+                        info: UpgradeInfo::new(2),
+                        requirement: 0,
+                    },
+                ),
+            ]
+            .into_iter()
+            .collect(),
+            spawn_prefabs: [
+                (
+                    EnemyType::Attacker,
+                    SpawnPrefab {
+                        movement: MovementType::Direct,
+                        min_score: 0,
+                        next_spawn: 1,
+                        color: Color::RED,
+                        cooldowns: [(0, 2.0), (1, 4.0), (2, 6.0), (3, 7.0)]
+                            .into_iter()
+                            .collect(),
+                        large_multiplier: 8.0,
+                        killed_siblings: 0,
+                    },
+                ),
+                (
+                    EnemyType::Frog,
+                    SpawnPrefab {
+                        movement: MovementType::SingleDouble {
+                            is_next_single: true,
+                        },
+                        min_score: 10,
+                        next_spawn: 1,
+                        color: Color::GREEN,
+                        cooldowns: [(0, 6.0), (1, 12.0), (2, 12.0), (3, 18.0)]
+                            .into_iter()
+                            .collect(),
+                        large_multiplier: 20.0,
+                        killed_siblings: 0,
+                    },
+                ),
+                (
+                    EnemyType::King,
+                    SpawnPrefab {
+                        movement: MovementType::Neighbour,
+                        min_score: 60,
+                        next_spawn: 1,
+                        color: Color::MAGENTA,
+                        cooldowns: [(0, 6.0), (1, 10.0), (2, 15.0), (3, 15.0)]
+                            .into_iter()
+                            .collect(),
+                        large_multiplier: 18.0,
+                        killed_siblings: 0,
+                    },
+                ),
+            ]
+            .into_iter()
+            .collect(),
+        }
+    }
+}
