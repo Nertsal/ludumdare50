@@ -26,121 +26,8 @@ impl GameState {
             },
             enemies: vec![],
             damages: vec![],
-            player_attacks: vec![Attack::new(
-                2,
-                [vec2(1, 0)],
-                Some(Attack::new(
-                    2,
-                    [vec2(1, 0), vec2(2, 0)],
-                    Some(Attack::new(2, [vec2(1, 0), vec2(2, 0), vec2(3, 0)], None)),
-                )),
-            )],
-            potential_attacks: vec![
-                Attack::new(
-                    2,
-                    [vec2(1, 0), vec2(2, 1)],
-                    Some(Attack::new(
-                        2,
-                        [vec2(1, 0), vec2(2, 1), vec2(2, -1)],
-                        Some(Attack::new(
-                            2,
-                            [vec2(1, 0), vec2(2, 1), vec2(2, -1), vec2(2, 0)],
-                            None,
-                        )),
-                    )),
-                ),
-                Attack::new(
-                    2,
-                    [vec2(1, 0), vec2(2, 0), vec2(1, 1)],
-                    Some(Attack::new(
-                        2,
-                        [vec2(1, 0), vec2(2, 0), vec2(1, 1), vec2(1, -1)],
-                        Some(Attack::new(
-                            2,
-                            [vec2(1, 0), vec2(2, 0), vec2(1, 1), vec2(1, -1), vec2(3, 1)],
-                            None,
-                        )),
-                    )),
-                ),
-                Attack::new(
-                    2,
-                    [vec2(1, 0), vec2(2, 0), vec2(3, 0), vec2(3, 1)],
-                    Some(Attack::new(
-                        2,
-                        [vec2(1, 0), vec2(2, 0), vec2(3, 0), vec2(3, 1), vec2(3, -1)],
-                        Some(Attack::new(
-                            2,
-                            [
-                                vec2(1, 0),
-                                vec2(2, 0),
-                                vec2(3, 0),
-                                vec2(3, 1),
-                                vec2(3, -1),
-                                vec2(4, 1),
-                                vec2(4, -1),
-                            ],
-                            None,
-                        )),
-                    )),
-                ),
-                Attack::new(
-                    2,
-                    [vec2(1, 0), vec2(2, 1), vec2(2, 0), vec2(2, -1)],
-                    Some(Attack::new(
-                        2,
-                        [
-                            vec2(1, 0),
-                            vec2(2, 1),
-                            vec2(2, 0),
-                            vec2(2, -1),
-                            vec2(3, 1),
-                            vec2(3, -1),
-                        ],
-                        Some(Attack::new(
-                            2,
-                            [
-                                vec2(1, 0),
-                                vec2(2, 1),
-                                vec2(2, 0),
-                                vec2(2, -1),
-                                vec2(3, 1),
-                                vec2(3, -1),
-                                vec2(4, 0),
-                            ],
-                            None,
-                        )),
-                    )),
-                ),
-                Attack::new(
-                    2,
-                    [vec2(1, 1), vec2(1, -1), vec2(2, 0), vec2(3, 0)],
-                    Some(Attack::new(
-                        2,
-                        [
-                            vec2(1, 1),
-                            vec2(1, -1),
-                            vec2(2, 0),
-                            vec2(3, 0),
-                            vec2(4, 1),
-                            vec2(4, -1),
-                        ],
-                        Some(Attack::new(
-                            2,
-                            [
-                                vec2(1, 1),
-                                vec2(1, -1),
-                                vec2(2, 0),
-                                vec2(3, 0),
-                                vec2(4, 1),
-                                vec2(4, -1),
-                                vec2(4, 0),
-                                vec2(5, 0),
-                            ],
-                            None,
-                        )),
-                    )),
-                ),
-            ],
+            player_attacks: initial_attacks().collect(),
+            potential_attacks: potential_attacks().collect(),
             player_ultimate: Teleport::new(5, 2),
             upgrades: [
                 (
@@ -236,4 +123,135 @@ impl GameState {
             .collect(),
         }
     }
+}
+
+fn rotate_randomly(attacks: impl IntoIterator<Item = Attack>) -> impl Iterator<Item = Attack> {
+    attacks.into_iter().map(|mut attack| {
+        let rotation = global_rng().gen_range(0..=3);
+        for _ in 0..rotation {
+            attack.rotate_left()
+        }
+        attack
+    })
+}
+
+fn initial_attacks() -> impl Iterator<Item = Attack> {
+    rotate_randomly([Attack::new(
+        2,
+        [vec2(1, 0)],
+        Some(Attack::new(
+            2,
+            [vec2(1, 0), vec2(2, 0)],
+            Some(Attack::new(2, [vec2(1, 0), vec2(2, 0), vec2(3, 0)], None)),
+        )),
+    )])
+}
+
+fn potential_attacks() -> impl Iterator<Item = Attack> {
+    rotate_randomly([
+        Attack::new(
+            2,
+            [vec2(1, 0), vec2(2, 1)],
+            Some(Attack::new(
+                2,
+                [vec2(1, 0), vec2(2, 1), vec2(2, -1)],
+                Some(Attack::new(
+                    2,
+                    [vec2(1, 0), vec2(2, 1), vec2(2, -1), vec2(2, 0)],
+                    None,
+                )),
+            )),
+        ),
+        Attack::new(
+            2,
+            [vec2(1, 0), vec2(2, 0), vec2(1, 1)],
+            Some(Attack::new(
+                2,
+                [vec2(1, 0), vec2(2, 0), vec2(1, 1), vec2(1, -1)],
+                Some(Attack::new(
+                    2,
+                    [vec2(1, 0), vec2(2, 0), vec2(1, 1), vec2(1, -1), vec2(3, 1)],
+                    None,
+                )),
+            )),
+        ),
+        Attack::new(
+            2,
+            [vec2(1, 0), vec2(2, 0), vec2(3, 0), vec2(3, 1)],
+            Some(Attack::new(
+                2,
+                [vec2(1, 0), vec2(2, 0), vec2(3, 0), vec2(3, 1), vec2(3, -1)],
+                Some(Attack::new(
+                    2,
+                    [
+                        vec2(1, 0),
+                        vec2(2, 0),
+                        vec2(3, 0),
+                        vec2(3, 1),
+                        vec2(3, -1),
+                        vec2(4, 1),
+                        vec2(4, -1),
+                    ],
+                    None,
+                )),
+            )),
+        ),
+        Attack::new(
+            2,
+            [vec2(1, 0), vec2(2, 1), vec2(2, 0), vec2(2, -1)],
+            Some(Attack::new(
+                2,
+                [
+                    vec2(1, 0),
+                    vec2(2, 1),
+                    vec2(2, 0),
+                    vec2(2, -1),
+                    vec2(3, 1),
+                    vec2(3, -1),
+                ],
+                Some(Attack::new(
+                    2,
+                    [
+                        vec2(1, 0),
+                        vec2(2, 1),
+                        vec2(2, 0),
+                        vec2(2, -1),
+                        vec2(3, 1),
+                        vec2(3, -1),
+                        vec2(4, 0),
+                    ],
+                    None,
+                )),
+            )),
+        ),
+        Attack::new(
+            2,
+            [vec2(1, 1), vec2(1, -1), vec2(2, 0), vec2(3, 0)],
+            Some(Attack::new(
+                2,
+                [
+                    vec2(1, 1),
+                    vec2(1, -1),
+                    vec2(2, 0),
+                    vec2(3, 0),
+                    vec2(4, 1),
+                    vec2(4, -1),
+                ],
+                Some(Attack::new(
+                    2,
+                    [
+                        vec2(1, 1),
+                        vec2(1, -1),
+                        vec2(2, 0),
+                        vec2(3, 0),
+                        vec2(4, 1),
+                        vec2(4, -1),
+                        vec2(4, 0),
+                        vec2(5, 0),
+                    ],
+                    None,
+                )),
+            )),
+        ),
+    ])
 }

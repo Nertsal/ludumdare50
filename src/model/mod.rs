@@ -314,6 +314,9 @@ impl Attack {
         for pos in &mut self.pattern {
             *pos = vec2(-pos.y, pos.x);
         }
+        if let Some(upgrade) = &mut self.upgrade {
+            upgrade.rotate_left();
+        }
     }
 
     pub fn attack_positions(&self, caster_pos: Position) -> impl Iterator<Item = Position> + '_ {
