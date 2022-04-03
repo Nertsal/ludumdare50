@@ -156,6 +156,7 @@ pub struct GameState {
     assets: Rc<Assets>,
     camera: Camera2d,
     arena_bounds: AABB<Coord>,
+    highscore: AutoSave<Score>,
     score: Score,
     player_attacks: Vec<Attack>,
     player: Player,
@@ -170,6 +171,7 @@ impl GameState {
             geng: geng.clone(),
             assets: assets.clone(),
             arena_bounds: AABB::from_corners(vec2(-4, -4), vec2(5, 5)),
+            highscore: AutoSave::load(static_path().join("highscore.json").to_str().unwrap()),
             score: 0,
             camera: Camera2d {
                 center: Vec2::ZERO,
@@ -185,9 +187,9 @@ impl GameState {
             damages: vec![],
             player_attacks: vec![
                 Attack::new(2, [vec2(1, 0)]),
-                Attack::new(2, [vec2(1, 0), vec2(2, 1)]),
-                Attack::new(2, [vec2(1, 0), vec2(2, 0), vec2(1, 1)]),
-                Attack::new(2, [vec2(1, 0), vec2(2, 0), vec2(3, 0), vec2(3, 1)]),
+                // Attack::new(2, [vec2(1, 0), vec2(2, 1)]),
+                // Attack::new(2, [vec2(1, 0), vec2(2, 0), vec2(1, 1)]),
+                // Attack::new(2, [vec2(1, 0), vec2(2, 0), vec2(3, 0), vec2(3, 1)]),
             ],
             spawn_prefabs: [
                 (
@@ -331,6 +333,7 @@ impl GameState {
                 self.enemies.retain(|enemy| {
                     if enemy.is_dead {
                         self.score += 1;
+                        *self.highscore = (*self.highscore).max(self.score);
                         self.spawn_prefabs
                             .get_mut(&enemy.typ)
                             .unwrap()
@@ -415,6 +418,13 @@ impl geng::State for GameState {
         renderer.draw_text(
             &format!("Score: {}", self.score),
             vec2(10.0, framebuffer_size.y - 10.0),
+            vec2(0.0, 1.0),
+            20.0,
+            Color::GRAY,
+        );
+        renderer.draw_text(
+            &format!("High Score: {}", *self.highscore),
+            vec2(10.0, framebuffer_size.y - 100.0),
             vec2(0.0, 1.0),
             20.0,
             Color::GRAY,
