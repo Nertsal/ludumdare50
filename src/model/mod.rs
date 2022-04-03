@@ -23,6 +23,7 @@ pub const TILE_SIZE: Vec2<f32> = vec2(1.0, 1.0);
 pub const UNIT_RADIUS: f32 = 0.25;
 pub const GRID_WIDTH: f32 = 0.05;
 pub const GRID_COLOR: Color<f32> = Color::GRAY;
+pub const WRAP_COLOR: Color<f32> = Color::CYAN;
 pub const DAMAGE_WIDTH: f32 = 0.025;
 pub const DAMAGE_COLOR: Color<f32> = Color::RED;
 pub const DAMAGE_EXTRA_SPACE: f32 = 0.25;

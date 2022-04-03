@@ -36,6 +36,44 @@ impl GameState {
             GRID_COLOR,
         );
 
+        // Wrap indicator
+        if self.player.position.x == self.arena_bounds.x_min
+            || self.player.position.x == self.arena_bounds.x_max
+        {
+            let left_pos = vec2(self.arena_bounds.x_min, self.player.position.y).map(|x| x as f32);
+            let right_pos =
+                vec2(self.arena_bounds.x_max + 1, self.player.position.y).map(|x| x as f32);
+            for pos in [left_pos, right_pos]
+                .into_iter()
+                .map(|x| x - TILE_SIZE / 2.0)
+            {
+                renderer.draw_aabb(
+                    AABB::point(pos)
+                        .extend_symmetric(vec2(GRID_WIDTH / 2.0, 0.0))
+                        .extend_up(TILE_SIZE.y),
+                    WRAP_COLOR,
+                );
+            }
+        }
+        if self.player.position.y == self.arena_bounds.y_min
+            || self.player.position.y == self.arena_bounds.y_max
+        {
+            let bottom_pos =
+                vec2(self.player.position.x, self.arena_bounds.y_max + 1).map(|x| x as f32);
+            let top_pos = vec2(self.player.position.x, self.arena_bounds.y_min).map(|x| x as f32);
+            for pos in [bottom_pos, top_pos]
+                .into_iter()
+                .map(|x| x - TILE_SIZE / 2.0)
+            {
+                renderer.draw_aabb(
+                    AABB::point(pos)
+                        .extend_symmetric(vec2(0.0, GRID_WIDTH / 2.0))
+                        .extend_right(TILE_SIZE.y),
+                    WRAP_COLOR,
+                );
+            }
+        }
+
         // Ultimate
         if let Some(origin) = self.using_ultimate {
             for pos in self
