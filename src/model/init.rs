@@ -18,8 +18,8 @@ impl GameState {
             },
             player: Player {
                 color: PLAYER_COLOR,
-                position: vec2(0, 0),
-                render_pos: vec2(0.0, 0.0),
+                position: Vec2::ZERO,
+                interpolation: Interpolation::new(Vec2::ZERO),
             },
             enemies: vec![],
             damages: vec![],

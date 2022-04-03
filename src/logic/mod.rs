@@ -1,6 +1,10 @@
 use super::*;
 use model::*;
 
+mod interpolation;
+
+pub use interpolation::*;
+
 impl GameState {
     pub fn tick(&mut self, player_move: Position) {
         if let Some(upgrade_menu) = &mut self.upgrade_menu {
@@ -17,7 +21,10 @@ impl GameState {
         }
 
         // Move player
-        self.player.position = clamp_pos(self.player.position + player_move, self.arena_bounds);
+        self.player.position = wrap_pos(self.player.position + player_move, self.arena_bounds);
+        self.player
+            .interpolation
+            .queue(self.player.position.map(|x| x as f32));
 
         if let Some(origin) = self.using_ultimate {
             self.player.position = clamp_pos(
@@ -38,6 +45,7 @@ impl GameState {
                 enemy.position + enemy.movement.move_towards(delta),
                 self.arena_bounds,
             );
+            enemy.interpolation.queue(enemy.position.map(|x| x as f32));
         }
 
         // self.player_collide();
@@ -81,7 +89,7 @@ impl GameState {
                     typ: enemy_type.clone(),
                     color: prefab.color,
                     position: spawn_point,
-                    render_pos: spawn_point.map(|x| x as f32),
+                    interpolation: Interpolation::new(spawn_point.map(|x| x as f32)),
                     movement: prefab.movement.clone(),
                     is_dead: false,
                 };
@@ -236,6 +244,24 @@ pub fn clamp_pos(pos: Position, aabb: AABB<Coord>) -> Position {
         pos.x.clamp(aabb.x_min, aabb.x_max),
         pos.y.clamp(aabb.y_min, aabb.y_max),
     )
+}
+
+pub fn wrap_pos(pos: Position, bounds: AABB<Coord>) -> Position {
+    vec2(
+        wrap_coord(pos.x, vec2(bounds.x_min, bounds.x_max)),
+        wrap_coord(pos.y, vec2(bounds.y_min, bounds.y_max)),
+    )
+}
+
+pub fn wrap_coord(mut pos: Coord, bounds: Vec2<Coord>) -> Coord {
+    let width = bounds.y - bounds.x + 1;
+    while pos < bounds.x {
+        pos += width;
+    }
+    while pos > bounds.y {
+        pos -= width
+    }
+    pos
 }
 
 pub fn grid_cell_aabb(cell_pos: Position, tile_size: Vec2<f32>) -> AABB<f32> {

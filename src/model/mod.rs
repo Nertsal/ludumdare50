@@ -3,6 +3,8 @@ mod init;
 
 use geng::Camera2d;
 
+use crate::logic::Interpolation;
+
 use super::*;
 
 use renderer::*;
@@ -13,7 +15,8 @@ pub type Score = u32;
 pub type Position = Vec2<Coord>;
 
 pub const PLAYER_COLOR: Color<f32> = Color::BLUE;
-pub const INTERPOLATION_SPEED: f32 = 10.0;
+pub const INTERPOLATION_MAX_TIME: f32 = 0.2;
+pub const INTERPOLATION_MIN_SPEED: f32 = 5.0;
 
 // Things in world coordinates
 pub const TILE_SIZE: Vec2<f32> = vec2(1.0, 1.0);
@@ -52,7 +55,7 @@ pub const ULTIMATE_HEIGHT: f32 = 300.0;
 pub struct Player {
     pub color: Color<f32>,
     pub position: Position,
-    pub render_pos: Vec2<f32>,
+    pub interpolation: Interpolation,
 }
 
 #[derive(Debug, Clone)]
@@ -60,7 +63,7 @@ pub struct Enemy {
     pub typ: EnemyType,
     pub color: Color<f32>,
     pub position: Position,
-    pub render_pos: Vec2<f32>,
+    pub interpolation: Interpolation,
     pub movement: MovementType,
     pub is_dead: bool,
 }
@@ -177,11 +180,9 @@ impl geng::State for GameState {
         let delta_time = delta_time as f32;
 
         // Interpolate player and enemies
-        self.player.render_pos += (self.player.position.map(|x| x as f32) - self.player.render_pos)
-            .clamp_len(..=INTERPOLATION_SPEED * delta_time);
+        self.player.interpolation.update(delta_time);
         for enemy in &mut self.enemies {
-            enemy.render_pos += (enemy.position.map(|x| x as f32) - enemy.render_pos)
-                .clamp_len(..=INTERPOLATION_SPEED * delta_time);
+            enemy.interpolation.update(delta_time);
         }
     }
 

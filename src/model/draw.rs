@@ -7,12 +7,16 @@ impl GameState {
 
         // Enemies
         for enemy in &self.enemies {
-            renderer.draw_circle(enemy.render_pos * TILE_SIZE, UNIT_RADIUS, enemy.color);
+            renderer.draw_circle(
+                enemy.interpolation.current() * TILE_SIZE,
+                UNIT_RADIUS,
+                enemy.color,
+            );
         }
 
         // Player
         renderer.draw_circle(
-            self.player.render_pos * TILE_SIZE,
+            self.player.interpolation.current() * TILE_SIZE,
             UNIT_RADIUS,
             self.player.color,
         );
