@@ -185,7 +185,12 @@ impl geng::State for GameState {
 
         // Player move limit
         if self.upgrade_menu.is_none() {
-            self.move_time_left -= delta_time;
+            self.move_time_left -= delta_time
+                * if self.using_ultimate.is_some() {
+                    0.5
+                } else {
+                    1.0
+                };
             if self.move_time_left <= 0.0 {
                 self.move_time_left = 0.0;
                 self.player.is_dead = true;
