@@ -21,10 +21,21 @@ impl GameState {
         }
 
         // Move player
-        self.player.position = wrap_pos(self.player.position + player_move, self.arena_bounds);
-        self.player
-            .interpolation
-            .queue(self.player.position.map(|x| x as f32));
+        let old_pos = self.player.position;
+        let (pos, jump) = wrap_pos(self.player.position + player_move, self.arena_bounds);
+        self.player.position = pos;
+        if jump {
+            let jump_dir = pos - old_pos;
+            let jump_dir =
+                vec2(jump_dir.x.signum(), jump_dir.y.signum()).map(|x| x as f32) * TILE_SIZE / 2.0;
+            self.player
+                .interpolation
+                .queue(old_pos.map(|x| x as f32) - jump_dir);
+            self.player
+                .interpolation
+                .queue_jump(pos.map(|x| x as f32) + jump_dir);
+        }
+        self.player.interpolation.queue(pos.map(|x| x as f32));
 
         if let Some(origin) = self.using_ultimate {
             self.player.position = clamp_pos(
@@ -246,22 +257,24 @@ pub fn clamp_pos(pos: Position, aabb: AABB<Coord>) -> Position {
     )
 }
 
-pub fn wrap_pos(pos: Position, bounds: AABB<Coord>) -> Position {
-    vec2(
-        wrap_coord(pos.x, vec2(bounds.x_min, bounds.x_max)),
-        wrap_coord(pos.y, vec2(bounds.y_min, bounds.y_max)),
-    )
+pub fn wrap_pos(pos: Position, bounds: AABB<Coord>) -> (Position, bool) {
+    let (x, jump_x) = wrap_coord(pos.x, vec2(bounds.x_min, bounds.x_max));
+    let (y, jump_y) = wrap_coord(pos.y, vec2(bounds.y_min, bounds.y_max));
+    (vec2(x, y), jump_x || jump_y)
 }
 
-pub fn wrap_coord(mut pos: Coord, bounds: Vec2<Coord>) -> Coord {
+pub fn wrap_coord(mut pos: Coord, bounds: Vec2<Coord>) -> (Coord, bool) {
     let width = bounds.y - bounds.x + 1;
+    let mut jump = false;
     while pos < bounds.x {
         pos += width;
+        jump = true;
     }
     while pos > bounds.y {
-        pos -= width
+        pos -= width;
+        jump = true;
     }
-    pos
+    (pos, jump)
 }
 
 pub fn grid_cell_aabb(cell_pos: Position, tile_size: Vec2<f32>) -> AABB<f32> {
