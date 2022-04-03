@@ -26,7 +26,16 @@ impl GameState {
 
         // Move player
         let old_pos = self.player.position;
-        let (pos, jump) = wrap_pos(self.player.position + player_move, self.arena_bounds);
+        let pos = self.player.position + player_move;
+        let (mut pos, jump) = wrap_pos(pos, self.arena_bounds);
+        if let Some(origin) = self.using_ultimate {
+            pos = clamp_wrapped_pos(
+                pos,
+                self.player_ultimate.boundary().translate(origin),
+                self.arena_bounds,
+            );
+        }
+
         self.player.position = pos;
         if jump {
             let jump_dir = pos - old_pos;
@@ -41,11 +50,7 @@ impl GameState {
         }
         self.player.interpolation.queue(pos.map(|x| x as f32));
 
-        if let Some(origin) = self.using_ultimate {
-            self.player.position = clamp_pos(
-                self.player.position,
-                self.player_ultimate.boundary().translate(origin),
-            );
+        if self.using_ultimate.is_some() {
             return;
         }
 
@@ -289,4 +294,41 @@ pub fn wrap_coord(mut pos: Coord, bounds: Vec2<Coord>) -> (Coord, bool) {
 
 pub fn grid_cell_aabb(cell_pos: Position, tile_size: Vec2<f32>) -> AABB<f32> {
     AABB::point(cell_pos.map(|x| x as f32) * tile_size).extend_symmetric(tile_size / 2.0)
+}
+
+pub fn clamp_wrapped_pos(pos: Position, aabb: AABB<Coord>, bounds: AABB<Coord>) -> Position {
+    let x = clamp_wrapped_coord(
+        pos.x,
+        vec2(aabb.x_min, aabb.x_max),
+        vec2(bounds.x_min, bounds.x_max),
+    );
+    let y = clamp_wrapped_coord(
+        pos.y,
+        vec2(aabb.y_min, aabb.y_max),
+        vec2(bounds.y_min, bounds.y_max),
+    );
+    vec2(x, y)
+}
+
+fn clamp_wrapped_coord(pos: Coord, wrapping: Vec2<Coord>, bounds: Vec2<Coord>) -> Coord {
+    let (pos, _) = wrap_coord(pos, bounds);
+    let (min, wrap_min) = wrap_coord(wrapping.x, bounds);
+    let (max, wrap_max) = wrap_coord(wrapping.y, bounds);
+    if wrap_min ^ wrap_max {
+        // Different sides
+        let d_min = min - pos;
+        let d_max = pos - max;
+        if d_min > 0 && d_max > 0 {
+            if d_min > d_max {
+                max
+            } else {
+                min
+            }
+        } else {
+            pos
+        }
+    } else {
+        // Same side
+        pos.clamp(min, max)
+    }
 }
