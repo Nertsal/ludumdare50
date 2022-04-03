@@ -139,9 +139,17 @@ impl Action {
         }
     }
 
+    pub fn set_on_cooldown(&mut self) {
+        self.next = self.cooldown;
+    }
+
+    pub fn is_ready(&self) -> bool {
+        self.next <= 0
+    }
+
     pub fn update(&mut self, delta_time: Time) -> bool {
         self.next -= delta_time;
-        self.next <= 0
+        self.is_ready()
     }
 }
 
@@ -171,7 +179,7 @@ impl Attack {
 
 pub struct Teleport {
     action: Action,
-    pub radius: Coord,
+    radius: Coord,
 }
 
 impl Teleport {
@@ -180,6 +188,18 @@ impl Teleport {
             action: Action::new(cooldown),
             radius,
         }
+    }
+
+    pub fn boundary(&self) -> AABB<Coord> {
+        AABB::ZERO.extend_uniform(self.radius)
+    }
+
+    pub fn deltas(&self) -> impl Iterator<Item = Position> + '_ {
+        (-self.radius..=self.radius)
+            .flat_map(|x| (-self.radius..=self.radius).map(move |y| vec2(x, y)))
+            .filter(|pos| {
+                *pos != Vec2::ZERO && pos.x.abs() <= self.radius && pos.y.abs() <= self.radius
+            })
     }
 }
 
@@ -192,6 +212,7 @@ pub struct GameState {
     score: Score,
     player_attacks: Vec<Attack>,
     player_ultimate: Teleport,
+    using_ultimate: Option<Position>,
     player: Player,
     enemies: Vec<Enemy>,
     damages: Vec<Position>,
@@ -206,6 +227,7 @@ impl GameState {
             arena_bounds: AABB::from_corners(vec2(-4, -4), vec2(5, 5)),
             highscore: AutoSave::load(static_path().join("highscore.json").to_str().unwrap()),
             score: 0,
+            using_ultimate: None,
             camera: Camera2d {
                 center: Vec2::ZERO,
                 rotation: 0.0,
@@ -277,10 +299,19 @@ impl GameState {
     }
 
     pub fn tick(&mut self, player_move: Position) {
-        self.damages = vec![];
-
         // Move player
+
         self.player.position = clamp_pos(self.player.position + player_move, self.arena_bounds);
+
+        if let Some(origin) = self.using_ultimate {
+            self.player.position = clamp_pos(
+                self.player.position,
+                self.player_ultimate.boundary().translate(origin),
+            );
+            return;
+        }
+
+        self.damages = vec![];
 
         // self.player_collide();
 
@@ -299,10 +330,11 @@ impl GameState {
         let mut attack_positions = Vec::new();
         for attack in &mut self.player_attacks {
             if attack.action.update(1) {
-                attack.action.next = attack.action.cooldown;
+                attack.action.set_on_cooldown();
                 attack_positions.extend(attack.attack_positions(self.player.position));
             }
         }
+        self.player_ultimate.action.update(1);
         self.attack_positions(Caster::Player, &attack_positions);
 
         // Count siblings
@@ -378,6 +410,15 @@ impl GameState {
             Caster::Enemy { id } => todo!(),
         }
     }
+
+    fn use_ultimate(&mut self) {
+        if self.using_ultimate.is_some() {
+            self.using_ultimate = None;
+        } else if self.player_ultimate.action.is_ready() {
+            self.using_ultimate = Some(self.player.position);
+            self.player_ultimate.action.set_on_cooldown();
+        }
+    }
 }
 
 impl geng::State for GameState {
@@ -424,6 +465,18 @@ impl geng::State for GameState {
             GRID_WIDTH,
             GRID_COLOR,
         );
+
+        // Ultimate
+        if let Some(origin) = self.using_ultimate {
+            for pos in self
+                .player_ultimate
+                .deltas()
+                .map(|pos| pos + origin)
+                .map(|pos| model::grid_cell_aabb(pos, TILE_SIZE).center())
+            {
+                renderer.draw_circle(pos, 0.1, Color::MAGENTA);
+            }
+        }
 
         let mut renderer = Renderer::new(
             &self.geng,
@@ -494,7 +547,7 @@ impl geng::State for GameState {
                     self.tick(vec2(0, 1));
                 }
                 geng::Key::Space => {
-                    self.tick(vec2(0, 0));
+                    self.use_ultimate();
                 }
                 _ => {}
             },

@@ -175,7 +175,7 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
         );
         let aabb = aabb.extend_up(-2.5 * font_size);
 
-        let boundary = AABB::ZERO.extend_uniform(ultimate.radius);
+        let boundary = ultimate.boundary();
         let (scale, offset) = scale_align_aabb(boundary.map(|x| x as f32), aabb);
         let aabb = aabb.translate(offset);
 
@@ -194,13 +194,8 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
             scale / 2.0 * 0.8,
             model::PLAYER_COLOR,
         );
-        for pos in (boundary.x_min..=boundary.x_max)
-            .flat_map(|x| (boundary.y_min..=boundary.y_max).map(move |y| vec2(x, y)))
-            .filter(|pos| {
-                *pos != Vec2::ZERO
-                    && pos.x.abs() <= ultimate.radius
-                    && pos.y.abs() <= ultimate.radius
-            })
+        for pos in ultimate
+            .deltas()
             .map(|pos| model::grid_cell_aabb(pos, tile_size).center())
         {
             self.draw_circle(pos + aabb.center(), scale * 0.1, Color::MAGENTA);
