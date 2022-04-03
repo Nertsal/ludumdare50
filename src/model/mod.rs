@@ -57,6 +57,7 @@ pub struct Player {
     pub color: Color<f32>,
     pub position: Position,
     pub interpolation: Interpolation,
+    pub is_dead: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -164,6 +165,8 @@ pub struct GameState {
     pub highscore: AutoSave<Score>,
     pub score: Score,
     pub experience: Experience,
+    pub move_time_limit: f32,
+    pub move_time_left: f32,
     pub player_attacks: Vec<Attack>,
     pub potential_attacks: Vec<Attack>,
     pub player_ultimate: Teleport,
@@ -179,6 +182,15 @@ pub struct GameState {
 impl geng::State for GameState {
     fn update(&mut self, delta_time: f64) {
         let delta_time = delta_time as f32;
+
+        // Player move limit
+        if self.upgrade_menu.is_none() {
+            self.move_time_left -= delta_time;
+            if self.move_time_left <= 0.0 {
+                self.move_time_left = 0.0;
+                self.player.is_dead = true;
+            }
+        }
 
         // Interpolate player and enemies
         self.player.interpolation.update(delta_time);

@@ -138,6 +138,15 @@ impl GameState {
             Color::GRAY,
         );
 
+        // Move time
+        renderer.draw_text(
+            &format!("Time left: {:.1}", self.move_time_left),
+            vec2(framebuffer_size.x / 2.0, framebuffer_size.y - 10.0),
+            vec2(0.5, 1.0),
+            20.0,
+            Color::GRAY,
+        );
+
         // Upgrade menu
         if let Some(upgrade_menu) = &self.upgrade_menu {
             let upgrades_width = (UPGRADE_SIZE.x + UPGRADE_EXTRA_SPACE)

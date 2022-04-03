@@ -7,6 +7,10 @@ pub use interpolation::*;
 
 impl GameState {
     pub fn tick(&mut self, player_move: Position) {
+        if self.player.is_dead {
+            return;
+        }
+
         if let Some(upgrade_menu) = &mut self.upgrade_menu {
             let mut choice = upgrade_menu.choice as isize + player_move.x.signum() as isize;
             let min = 0;
@@ -45,6 +49,7 @@ impl GameState {
             return;
         }
 
+        self.move_time_left = self.move_time_limit;
         self.damages = vec![];
 
         // self.player_collide();
@@ -150,6 +155,10 @@ impl GameState {
     }
 
     pub fn use_ultimate(&mut self) {
+        if self.player.is_dead {
+            return;
+        }
+
         if self.using_ultimate.is_some() {
             self.using_ultimate = None;
         } else if self.upgrade_menu.is_none() && self.player_ultimate.action.is_ready() {
@@ -214,7 +223,7 @@ impl GameState {
                             self.player_ultimate.action.cooldown -= 1;
                         }
                         UpgradeType::IncDeathTimer => {
-                            // self.death_time += 2;
+                            self.move_time_limit += 2.0;
                         }
                         UpgradeType::ReduceAttackCooldown => {
                             self.player_attacks
