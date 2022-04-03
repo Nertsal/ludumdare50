@@ -69,7 +69,7 @@ impl GameState {
             enemy.interpolation.queue(enemy.position.map(|x| x as f32));
         }
 
-        // self.player_collide();
+        self.player_collide();
 
         // Player actions
         let mut attack_positions = Vec::new();
@@ -116,6 +116,16 @@ impl GameState {
                 };
                 self.enemies.push(enemy);
             }
+        }
+    }
+
+    fn player_collide(&mut self) {
+        if self
+            .enemies
+            .iter()
+            .any(|enemy| enemy.position == self.player.position)
+        {
+            self.player.is_dead = true;
         }
     }
 
