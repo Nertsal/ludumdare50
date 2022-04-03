@@ -129,6 +129,7 @@ impl SpawnPrefab {
 pub struct Action {
     cooldown: Time,
     next: Time,
+    cooldown_multiplier: f32,
 }
 
 impl Action {
@@ -136,11 +137,12 @@ impl Action {
         Self {
             cooldown,
             next: cooldown,
+            cooldown_multiplier: 1.0,
         }
     }
 
     pub fn set_on_cooldown(&mut self) {
-        self.next = self.cooldown;
+        self.next = (self.cooldown as f32 * self.cooldown_multiplier).ceil() as Time;
     }
 
     pub fn is_ready(&self) -> bool {
@@ -156,13 +158,19 @@ impl Action {
 pub struct Attack {
     action: Action,
     pattern: Vec<Position>,
+    upgrade: Option<Box<Attack>>,
 }
 
 impl Attack {
-    pub fn new(cooldown: Time, pattern: impl IntoIterator<Item = Position>) -> Self {
+    pub fn new(
+        cooldown: Time,
+        pattern: impl IntoIterator<Item = Position>,
+        upgrade: Option<Attack>,
+    ) -> Self {
         Self {
             action: Action::new(cooldown),
             pattern: pattern.into_iter().collect(),
+            upgrade: upgrade.map(|attack| Box::new(attack)),
         }
     }
 
@@ -174,6 +182,12 @@ impl Attack {
 
     pub fn attack_positions(&self, caster_pos: Position) -> impl Iterator<Item = Position> + '_ {
         self.pattern.iter().map(move |delta| caster_pos + *delta)
+    }
+
+    pub fn upgrade(&mut self) {
+        if let Some(attack) = self.upgrade.take() {
+            *self = *attack;
+        }
     }
 }
 
@@ -311,11 +325,11 @@ impl GameState {
             },
             enemies: vec![],
             damages: vec![],
-            player_attacks: vec![Attack::new(2, [vec2(1, 0)])],
+            player_attacks: vec![Attack::new(2, [vec2(1, 0)], None)],
             potential_attacks: vec![
-                Attack::new(2, [vec2(1, 0), vec2(2, 1)]),
-                Attack::new(2, [vec2(1, 0), vec2(2, 0), vec2(1, 1)]),
-                Attack::new(2, [vec2(1, 0), vec2(2, 0), vec2(3, 0), vec2(3, 1)]),
+                Attack::new(2, [vec2(1, 0), vec2(2, 1)], None),
+                Attack::new(2, [vec2(1, 0), vec2(2, 0), vec2(1, 1)], None),
+                Attack::new(2, [vec2(1, 0), vec2(2, 0), vec2(3, 0), vec2(3, 1)], None),
             ],
             player_ultimate: Teleport::new(5, 2),
             upgrades: [
@@ -563,6 +577,61 @@ impl GameState {
                 lvl_ups_left: lvl_ups,
                 options,
             });
+        }
+    }
+
+    fn select_upgrade(&mut self, upgrade_index: usize) {
+        if let Some(mut menu) = self.upgrade_menu.take() {
+            if let Some((upgrade_type, attack_options)) = menu.options.get(upgrade_index) {
+                let attack_index = attack_options.choose(&mut global_rng());
+                if let Some(upgrade) = self.upgrades.get_mut(upgrade_type) {
+                    match upgrade_type {
+                        UpgradeType::NewAttack => {
+                            let attack_index = (0..self.potential_attacks.len())
+                                .choose(&mut global_rng())
+                                .unwrap();
+                            let attack = self.potential_attacks.remove(attack_index);
+                            self.player_attacks.push(attack);
+                        }
+                        UpgradeType::IncUltRadius => {
+                            self.player_ultimate.radius += 1;
+                        }
+                        UpgradeType::ReduceUltCooldown => {
+                            self.player_ultimate.action.cooldown -= 1;
+                        }
+                        UpgradeType::IncDeathTimer => {
+                            // self.death_time += 2;
+                        }
+                        UpgradeType::ReduceAttackCooldown => {
+                            self.player_attacks
+                                .get_mut(*attack_index.unwrap())
+                                .unwrap()
+                                .action
+                                .cooldown_multiplier *= 0.8;
+                        }
+                        UpgradeType::UpgradeAttack => {
+                            self.player_attacks
+                                .get_mut(*attack_index.unwrap())
+                                .unwrap()
+                                .upgrade();
+                        }
+                    }
+
+                    match upgrade {
+                        Upgrade::Global { info, .. } => {
+                            info.current += 1;
+                        }
+                        Upgrade::Attack { info } => {
+                            info.get_mut(*attack_index.unwrap()).unwrap().current += 1;
+                        }
+                    }
+
+                    menu.lvl_ups_left -= 1;
+                    if menu.lvl_ups_left > 0 {
+                        self.upgrade_menu = Some(menu);
+                    }
+                }
+            }
         }
     }
 }
