@@ -2,6 +2,7 @@ use geng::prelude::*;
 
 mod model;
 mod renderer;
+mod logic;
 
 #[derive(geng::Assets)]
 pub struct Assets {}

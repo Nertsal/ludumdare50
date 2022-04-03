@@ -154,7 +154,7 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
             model::PLAYER_COLOR,
         );
         for pos in attack.attack_positions(Vec2::ZERO) {
-            let aabb = model::grid_cell_aabb(pos, tile_size)
+            let aabb = logic::grid_cell_aabb(pos, tile_size)
                 .translate(aabb.center())
                 .extend_uniform(-scale * 0.2);
             self.draw_cross(aabb, scale * 0.1, Color::RED)
@@ -200,7 +200,7 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
         );
         for pos in ultimate
             .deltas()
-            .map(|pos| model::grid_cell_aabb(pos, tile_size).center())
+            .map(|pos| logic::grid_cell_aabb(pos, tile_size).center())
         {
             self.draw_circle(pos + aabb.center(), scale * 0.1, Color::MAGENTA);
         }

@@ -19,7 +19,7 @@ impl GameState {
 
         // Damage
         for &pos in &self.damages {
-            let aabb = grid_cell_aabb(pos, TILE_SIZE).extend_uniform(-DAMAGE_EXTRA_SPACE);
+            let aabb = logic::grid_cell_aabb(pos, TILE_SIZE).extend_uniform(-DAMAGE_EXTRA_SPACE);
             renderer.draw_cross(aabb, DAMAGE_WIDTH, DAMAGE_COLOR);
         }
 
@@ -38,7 +38,7 @@ impl GameState {
                 .player_ultimate
                 .deltas()
                 .map(|pos| pos + origin)
-                .map(|pos| model::grid_cell_aabb(pos, TILE_SIZE).center())
+                .map(|pos| logic::grid_cell_aabb(pos, TILE_SIZE).center())
             {
                 renderer.draw_circle(pos, 0.1, Color::MAGENTA);
             }
