@@ -79,7 +79,7 @@ impl GameState {
             for pos in self
                 .player_ultimate
                 .deltas()
-                .map(|pos| pos + origin)
+                .map(|pos| logic::wrap_pos(pos + origin, self.arena_bounds).0)
                 .map(|pos| logic::grid_cell_aabb(pos, TILE_SIZE).center())
             {
                 renderer.draw_circle(pos, 0.1, Color::MAGENTA);
