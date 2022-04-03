@@ -5,10 +5,10 @@ use crate::model::{Attack, Teleport};
 use super::*;
 
 pub struct Renderer<'a, 'f, C: geng::AbstractCamera2d> {
-    geng: &'a Geng,
-    assets: &'a Rc<Assets>,
-    camera: &'a C,
-    framebuffer: &'a mut ugli::Framebuffer<'f>,
+    pub geng: &'a Geng,
+    pub assets: &'a Rc<Assets>,
+    pub camera: &'a C,
+    pub framebuffer: &'a mut ugli::Framebuffer<'f>,
 }
 
 impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
@@ -48,7 +48,11 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
         );
     }
 
-    pub fn draw_aabb(&mut self, aabb: AABB<f32>, width: f32, color: Color<f32>) {
+    pub fn draw_aabb(&mut self, aabb: AABB<f32>, color: Color<f32>) {
+        draw_2d::Quad::new(aabb, color).draw_2d(self.geng, self.framebuffer, self.camera);
+    }
+
+    pub fn draw_aabb_frame(&mut self, aabb: AABB<f32>, width: f32, color: Color<f32>) {
         let corners = aabb.corners();
         draw_2d::Chain::new(
             Chain::new(
@@ -229,6 +233,12 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
             .scale_uniform(font_size)
             .align_bounding_box(alignment)
             .translate(pos)
+            .draw_2d(self.geng, self.framebuffer, self.camera);
+    }
+
+    pub fn draw_text_fit(&mut self, text: &str, aabb: AABB<f32>, color: Color<f32>) {
+        draw_2d::Text::unit(self.geng.default_font().clone(), text, color)
+            .fit_into(aabb)
             .draw_2d(self.geng, self.framebuffer, self.camera);
     }
 }

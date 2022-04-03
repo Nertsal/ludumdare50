@@ -20,6 +20,23 @@ const GRID_COLOR: Color<f32> = Color::GRAY;
 const DAMAGE_WIDTH: f32 = 0.025;
 const DAMAGE_COLOR: Color<f32> = Color::RED;
 const DAMAGE_EXTRA_SPACE: f32 = 0.25;
+const UPGRADE_SIZE: Vec2<f32> = vec2(100.0, 100.0);
+const UPGRADE_EXTRA_SPACE: f32 = 50.0;
+const UPGRADE_FRAME_WIDTH: f32 = 1.0;
+const UPGRADE_FRAME_COLOR: Color<f32> = Color::GREEN;
+const UPGRADE_BACKGROUND_COLOR: Color<f32> = Color {
+    r: 0.3,
+    g: 0.3,
+    b: 0.3,
+    a: 0.7,
+};
+const UPGRADE_TEXT_COLOR: Color<f32> = Color::WHITE;
+const UPGRADE_SELECTED_COLOR: Color<f32> = Color {
+    r: 0.5,
+    g: 0.5,
+    b: 0.5,
+    a: 0.8,
+};
 
 // Things in screen coordinates
 const ATTACKS_OFFSET: f32 = 25.0;
@@ -254,6 +271,7 @@ enum UpgradeType {
 struct UpgradeMenu {
     lvl_ups_left: usize,
     options: Vec<(UpgradeType, Vec<usize>)>,
+    choice: usize,
 }
 
 struct Experience {
@@ -267,7 +285,7 @@ impl Experience {
         Self {
             level: 0,
             exp: 0,
-            exp_to_next_lvl: 10,
+            exp_to_next_lvl: 5,
         }
     }
 
@@ -421,8 +439,20 @@ impl GameState {
     }
 
     pub fn tick(&mut self, player_move: Position) {
-        // Move player
+        if let Some(upgrade_menu) = &mut self.upgrade_menu {
+            let mut choice = upgrade_menu.choice as isize + player_move.x.signum() as isize;
+            let min = 0;
+            let max = upgrade_menu.options.len() as isize - 1;
+            if choice < min {
+                choice = max;
+            } else if choice > max {
+                choice = min;
+            }
+            upgrade_menu.choice = choice as usize;
+            return;
+        }
 
+        // Move player
         self.player.position = clamp_pos(self.player.position + player_move, self.arena_bounds);
 
         if let Some(origin) = self.using_ultimate {
@@ -539,7 +569,7 @@ impl GameState {
     fn use_ultimate(&mut self) {
         if self.using_ultimate.is_some() {
             self.using_ultimate = None;
-        } else if self.player_ultimate.action.is_ready() {
+        } else if self.upgrade_menu.is_none() && self.player_ultimate.action.is_ready() {
             self.using_ultimate = Some(self.player.position);
             self.player_ultimate.action.set_on_cooldown();
         }
@@ -571,18 +601,19 @@ impl GameState {
                             Some((typ, options))
                         }
                     }
-                })
-                .collect();
+                });
+            let options = options.choose_multiple(&mut global_rng(), 3);
             self.upgrade_menu = Some(UpgradeMenu {
                 lvl_ups_left: lvl_ups,
                 options,
+                choice: 0,
             });
         }
     }
 
-    fn select_upgrade(&mut self, upgrade_index: usize) {
+    fn select_upgrade(&mut self) {
         if let Some(mut menu) = self.upgrade_menu.take() {
-            if let Some((upgrade_type, attack_options)) = menu.options.get(upgrade_index) {
+            if let Some((upgrade_type, attack_options)) = menu.options.get(menu.choice) {
                 let attack_index = attack_options.choose(&mut global_rng());
                 if let Some(upgrade) = self.upgrades.get_mut(upgrade_type) {
                     match upgrade_type {
@@ -744,6 +775,50 @@ impl geng::State for GameState {
             20.0,
             Color::GRAY,
         );
+
+        // Upgrade menu
+        if let Some(upgrade_menu) = &self.upgrade_menu {
+            let upgrades_width = (UPGRADE_SIZE.x + UPGRADE_EXTRA_SPACE)
+                * upgrade_menu.options.len() as f32
+                - UPGRADE_EXTRA_SPACE;
+            renderer.draw_aabb(
+                AABB::point(framebuffer_size / 2.0).extend_symmetric(
+                    vec2(
+                        upgrades_width + UPGRADE_EXTRA_SPACE,
+                        UPGRADE_SIZE.y + UPGRADE_EXTRA_SPACE,
+                    ) / 2.0,
+                ),
+                UPGRADE_BACKGROUND_COLOR,
+            );
+            let upgrade_aabb = AABB::ZERO.extend_symmetric(UPGRADE_SIZE / 2.0);
+            let left_pos =
+                framebuffer_size / 2.0 - vec2((upgrades_width - UPGRADE_SIZE.x) / 2.0, 0.0);
+            for (i, (upgrade, _)) in upgrade_menu.options.iter().enumerate() {
+                let aabb = upgrade_aabb.translate(
+                    left_pos + i as f32 * vec2(UPGRADE_SIZE.x + UPGRADE_EXTRA_SPACE, 0.0),
+                );
+                renderer.draw_aabb_frame(aabb, UPGRADE_FRAME_WIDTH, UPGRADE_FRAME_COLOR);
+                if i == upgrade_menu.choice {
+                    renderer.draw_aabb(
+                        aabb.extend_uniform(-UPGRADE_FRAME_WIDTH / 2.0),
+                        UPGRADE_SELECTED_COLOR,
+                    );
+                }
+                let text = match upgrade {
+                    UpgradeType::NewAttack => "NEW",
+                    UpgradeType::IncUltRadius => "+1 TP RADIUS",
+                    UpgradeType::ReduceUltCooldown => "-1 TP CD",
+                    UpgradeType::IncDeathTimer => "+2 SEC LIFE",
+                    UpgradeType::ReduceAttackCooldown => "-2 ATTACK CD",
+                    UpgradeType::UpgradeAttack => "UPGRADE",
+                };
+                renderer.draw_text_fit(
+                    text,
+                    aabb.extend_uniform(-UPGRADE_SIZE.x * 0.1),
+                    UPGRADE_TEXT_COLOR,
+                );
+            }
+        }
     }
 
     fn handle_event(&mut self, event: geng::Event) {
@@ -763,6 +838,9 @@ impl geng::State for GameState {
                 }
                 geng::Key::Space => {
                     self.use_ultimate();
+                }
+                geng::Key::Enter => {
+                    self.select_upgrade();
                 }
                 _ => {}
             },
