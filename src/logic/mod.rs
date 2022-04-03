@@ -160,6 +160,7 @@ impl GameState {
         }
 
         if self.using_ultimate.is_some() {
+            self.move_time_left = self.move_time_limit;
             self.using_ultimate = None;
         } else if self.upgrade_menu.is_none() && self.player_ultimate.action.is_ready() {
             self.using_ultimate = Some(self.player.position);
