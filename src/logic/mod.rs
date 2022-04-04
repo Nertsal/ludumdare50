@@ -93,6 +93,8 @@ impl GameState {
         }
 
         // Spawn new enemies
+        self.enemies
+            .extend(self.spawns.drain(..).map(|(_, enemy)| enemy));
         for (enemy_type, prefab) in self
             .spawn_prefabs
             .iter_mut()
@@ -115,7 +117,7 @@ impl GameState {
                     movement: prefab.movement.clone(),
                     is_dead: false,
                 };
-                self.enemies.push(enemy);
+                self.spawns.push((spawn_point, enemy));
             }
         }
     }

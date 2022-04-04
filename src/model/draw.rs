@@ -52,6 +52,13 @@ impl GameState {
             }
         }
 
+        // Spawns
+        for (spawn_pos, _) in &self.spawns {
+            let aabb = logic::grid_cell_aabb(*spawn_pos, TILE_SIZE);
+            let aabb = AABB::point(aabb.center()).extend_symmetric(WARNING_SIZE / 2.0);
+            renderer.draw_texture(&self.assets.exclamation, aabb);
+        }
+
         // Enemies
         for enemy in &self.enemies {
             renderer.draw_circle(

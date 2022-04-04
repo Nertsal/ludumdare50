@@ -22,6 +22,7 @@ pub const SLOTS_REQUIREMENTS: [Score; 4] = [0, 30, 70, 350];
 
 // Things in world coordinates
 pub const TILE_SIZE: Vec2<f32> = vec2(1.0, 1.0);
+pub const WARNING_SIZE: Vec2<f32> = vec2(0.5, 0.5);
 pub const UNIT_RADIUS: f32 = 0.25;
 pub const GRID_WIDTH: f32 = 0.05;
 pub const DAMAGE_WIDTH: f32 = 0.025;
@@ -230,6 +231,7 @@ pub struct GameState {
     pub player: Player,
     pub enemies: Vec<Enemy>,
     pub damages: Vec<Position>,
+    pub spawns: Vec<(Position, Enemy)>,
     pub spawn_prefabs: HashMap<EnemyType, SpawnPrefab>,
     pub upgrades: HashMap<UpgradeType, Upgrade>,
     pub upgrade_menu: Option<UpgradeMenu>,

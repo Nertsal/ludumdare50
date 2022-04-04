@@ -19,6 +19,7 @@ impl GameState {
             using_ultimate: None,
             upgrade_menu: None,
             freeze_move_timer: true,
+            spawns: vec![],
             fade: Fade {
                 min: 0.0,
                 max: 1.0,

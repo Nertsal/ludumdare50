@@ -57,6 +57,10 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
         draw_2d::Quad::new(aabb, color).draw_2d(self.geng, self.framebuffer, self.camera);
     }
 
+    pub fn draw_texture(&mut self, texture: &ugli::Texture, aabb: AABB<f32>) {
+        draw_2d::TexturedQuad::new(aabb, texture).draw_2d(self.geng, self.framebuffer, self.camera);
+    }
+
     pub fn draw_aabb_frame(&mut self, aabb: AABB<f32>, width: f32, color: Color<f32>) {
         let corners = aabb.corners();
         draw_2d::Chain::new(
