@@ -218,19 +218,27 @@ impl GameState {
                 let aabb = aabb.extend_uniform(-UPGRADE_SIZE.x * 0.1);
                 let texts = match upgrade {
                     UpgradeType::NewAttack => {
-                        let text_aabb = aabb.extend_down(-aabb.height() / 2.0);
-                        renderer.draw_text_fit(
-                            "New",
-                            text_aabb.extend_down(-text_aabb.height() / 2.0),
-                            UPGRADE_TEXT_COLOR,
+                        let text_height = aabb.height() / 6.0;
+                        let text_aabb = AABB::from_corners(
+                            aabb.top_right(),
+                            vec2(aabb.x_min, aabb.y_max - text_height),
                         );
+                        renderer.draw_text_fit("NEW ATTACK", text_aabb, UPGRADE_TEXT_COLOR);
                         let new_attack = &self.potential_attacks[attack_index.unwrap()];
-                        renderer.draw_text_fit(
-                            &format!("Cooldown {}", new_attack.action.cooldown),
-                            text_aabb.extend_up(-text_aabb.height() / 2.0),
-                            UPGRADE_TEXT_COLOR,
+                        let cd_height = aabb.height() / 8.0;
+                        let cd_aabb = AABB::from_corners(
+                            aabb.bottom_left(),
+                            vec2(aabb.x_max, aabb.y_min + cd_height),
                         );
-                        renderer.draw_attack(new_attack, aabb.extend_up(-aabb.height() / 2.0));
+                        renderer.draw_cooldown(
+                            new_attack.action.next,
+                            new_attack.action.cooldown,
+                            cd_aabb,
+                        );
+                        let attack_aabb = aabb
+                            .extend_up(-text_height * 1.5)
+                            .extend_down(-cd_height * 1.5);
+                        renderer.draw_attack(new_attack, attack_aabb);
                         vec![]
                     }
                     UpgradeType::IncUltRadius => vec![
