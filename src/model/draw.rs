@@ -5,28 +5,6 @@ impl GameState {
         let framebuffer_size = framebuffer.size().map(|x| x as f32);
         let mut renderer = Renderer::new(&self.geng, &self.assets, &self.camera, framebuffer);
 
-        // Enemies
-        for enemy in &self.enemies {
-            renderer.draw_circle(
-                enemy.interpolation.current() * TILE_SIZE,
-                UNIT_RADIUS,
-                enemy.color,
-            );
-        }
-
-        // Player
-        renderer.draw_circle(
-            self.player.interpolation.current() * TILE_SIZE,
-            UNIT_RADIUS,
-            self.player.color,
-        );
-
-        // Damage
-        for &pos in &self.damages {
-            let aabb = logic::grid_cell_aabb(pos, TILE_SIZE).extend_uniform(-DAMAGE_EXTRA_SPACE);
-            renderer.draw_cross(aabb, DAMAGE_WIDTH, DAMAGE_COLOR);
-        }
-
         // Grid
         renderer.draw_grid(
             self.arena_bounds,
@@ -74,6 +52,15 @@ impl GameState {
             }
         }
 
+        // Enemies
+        for enemy in &self.enemies {
+            renderer.draw_circle(
+                enemy.interpolation.current() * TILE_SIZE,
+                UNIT_RADIUS,
+                enemy.color,
+            );
+        }
+
         // Ultimate
         if let Some(origin) = self.using_ultimate {
             for pos in self
@@ -84,6 +71,25 @@ impl GameState {
             {
                 renderer.draw_circle(pos, 0.1, Color::MAGENTA);
             }
+        }
+
+        // Player
+        let mut color = self.player.color;
+        color.a = if self.using_ultimate.is_some() {
+            PLAYER_ULTIMATE_ALPHA
+        } else {
+            1.0
+        };
+        renderer.draw_circle(
+            self.player.interpolation.current() * TILE_SIZE,
+            UNIT_RADIUS,
+            color,
+        );
+
+        // Damage
+        for &pos in &self.damages {
+            let aabb = logic::grid_cell_aabb(pos, TILE_SIZE).extend_uniform(-DAMAGE_EXTRA_SPACE);
+            renderer.draw_cross(aabb, DAMAGE_WIDTH, DAMAGE_COLOR);
         }
 
         let mut renderer = Renderer::new(

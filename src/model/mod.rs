@@ -17,6 +17,7 @@ pub type Position = Vec2<Coord>;
 pub const FADE_COLOR: Color<f32> = Color::BLACK;
 pub const FADE_TIME: f32 = 2.0;
 pub const PLAYER_COLOR: Color<f32> = Color::BLUE;
+pub const PLAYER_ULTIMATE_ALPHA: f32 = 0.5;
 pub const INTERPOLATION_MAX_TIME: f32 = 0.2;
 pub const INTERPOLATION_MIN_SPEED: f32 = 5.0;
 
@@ -373,9 +374,7 @@ impl Teleport {
     pub fn deltas(&self) -> impl Iterator<Item = Position> + '_ {
         (-self.radius..=self.radius)
             .flat_map(|x| (-self.radius..=self.radius).map(move |y| vec2(x, y)))
-            .filter(|pos| {
-                *pos != Vec2::ZERO && pos.x.abs() <= self.radius && pos.y.abs() <= self.radius
-            })
+            .filter(|pos| pos.x.abs() <= self.radius && pos.y.abs() <= self.radius)
     }
 }
 
