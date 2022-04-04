@@ -18,7 +18,7 @@ pub const FADE_TIME: f32 = 2.0;
 pub const PLAYER_ULTIMATE_ALPHA: f32 = 0.5;
 pub const INTERPOLATION_MAX_TIME: f32 = 0.2;
 pub const INTERPOLATION_MIN_SPEED: f32 = 5.0;
-pub const SLOTS_REQUIREMENTS: [Score; 4] = [0, 30, 70, 350];
+pub const SLOTS_REQUIREMENTS: [Score; 4] = [0, 20, 90, 200];
 pub const LEVEL_SCORES: [Score; 11] = [3, 8, 15, 26, 40, 60, 85, 120, 170, 235, 300];
 
 // Things in world coordinates
