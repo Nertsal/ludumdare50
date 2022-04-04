@@ -180,7 +180,7 @@ fn potential_attacks() -> impl Iterator<Item = Attack> {
             )),
         ),
         Attack::new(
-            2,
+            3,
             [vec2(1, 0), vec2(2, 0), vec2(1, 1)],
             Some(Attack::new(
                 2,
@@ -193,7 +193,7 @@ fn potential_attacks() -> impl Iterator<Item = Attack> {
             )),
         ),
         Attack::new(
-            2,
+            4,
             [vec2(1, 0), vec2(2, 0), vec2(3, 0), vec2(3, 1)],
             Some(Attack::new(
                 2,
@@ -214,7 +214,7 @@ fn potential_attacks() -> impl Iterator<Item = Attack> {
             )),
         ),
         Attack::new(
-            2,
+            4,
             [vec2(1, 0), vec2(2, 1), vec2(2, 0), vec2(2, -1)],
             Some(Attack::new(
                 2,
@@ -242,7 +242,7 @@ fn potential_attacks() -> impl Iterator<Item = Attack> {
             )),
         ),
         Attack::new(
-            2,
+            4,
             [vec2(1, 1), vec2(1, -1), vec2(2, 0), vec2(3, 0)],
             Some(Attack::new(
                 2,
