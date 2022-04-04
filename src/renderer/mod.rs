@@ -2,7 +2,9 @@ use geng::Draw2d;
 
 use crate::model::{
     Attack, Teleport, Time, ATTACK_COOLDOWN_BACKGROUND_COLOR, ATTACK_COOLDOWN_BAR_EXTRA_SPACE,
-    ATTACK_COOLDOWN_COLOR, ATTACK_COOLDOWN_HEIGHT, ATTACK_LOCK_TEXT_COLOR, SLOTS_REQUIREMENTS,
+    ATTACK_COOLDOWN_COLOR, ATTACK_COOLDOWN_HEIGHT, ATTACK_LOCK_TEXT_COLOR,
+    LEVEL_BACKGROUND_BACK_COLOR, LEVEL_BACKGROUND_FRONT_COLOR, LEVEL_INNER_SPACE,
+    LEVEL_OUTER_SPACE, LEVEL_TEXT_COLOR, SLOTS_REQUIREMENTS,
 };
 
 use super::*;
@@ -315,6 +317,23 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
         draw_2d::Text::unit(self.geng.default_font().clone(), text, color)
             .fit_into(aabb)
             .draw_2d(self.geng, self.framebuffer, self.camera);
+    }
+
+    pub fn draw_level(&mut self, level: u32, aabb: AABB<f32>) {
+        let aabb = AABB::point(aabb.center()).extend_uniform(aabb.width().min(aabb.height()) / 2.0);
+        self.draw_circle(
+            aabb.center(),
+            aabb.width() / 2.0,
+            LEVEL_BACKGROUND_BACK_COLOR,
+        );
+        let aabb = aabb.extend_uniform(-LEVEL_OUTER_SPACE);
+        self.draw_circle(
+            aabb.center(),
+            aabb.width() / 2.0,
+            LEVEL_BACKGROUND_FRONT_COLOR,
+        );
+        let aabb = aabb.extend_uniform(-LEVEL_INNER_SPACE);
+        self.draw_text_fit(&format!("{}", level), aabb, LEVEL_TEXT_COLOR);
     }
 }
 

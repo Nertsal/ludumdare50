@@ -37,8 +37,11 @@ pub const ATTACKS_BORDER_WIDTH: f32 = 5.0;
 pub const ULTIMATE_HEIGHT: f32 = 300.0;
 pub const EXPERIENCE_BAR_SIZE: Vec2<f32> = vec2(50.0, 600.0);
 pub const EXPERIENCE_BAR_INNER_SPACE: f32 = 5.0;
+pub const EXPERIENCE_BORDER_WIDTH: f32 = 5.0;
 pub const ATTACK_COOLDOWN_BAR_EXTRA_SPACE: f32 = 3.0;
 pub const ATTACK_COOLDOWN_HEIGHT: f32 = 15.0;
+pub const LEVEL_OUTER_SPACE: f32 = 10.0;
+pub const LEVEL_INNER_SPACE: f32 = 7.5;
 
 // Colors
 pub const FADE_COLOR: Color<f32> = Color::BLACK;
@@ -61,11 +64,40 @@ pub const UPGRADE_SELECTED_COLOR: Color<f32> = Color {
     a: 0.8,
 };
 pub const ATTACKS_BORDER_COLOR: Color<f32> = Color::GRAY;
-pub const EXPERIENCE_BAR_BACKGROUND_COLOR: Color<f32> = Color::GRAY;
+pub const EXPERIENCE_BAR_BACKGROUND_COLOR: Color<f32> = Color {
+    r: 0.1,
+    g: 0.4,
+    b: 0.1,
+    a: 1.0,
+};
 pub const EXPERIENCE_BAR_COLOR: Color<f32> = Color::GREEN;
+pub const EXPERIENCE_BORDER_COLOR: Color<f32> = Color {
+    r: 0.2,
+    g: 0.2,
+    b: 0.2,
+    a: 1.0,
+};
 pub const ATTACK_COOLDOWN_BACKGROUND_COLOR: Color<f32> = Color::GRAY;
 pub const ATTACK_COOLDOWN_COLOR: Color<f32> = Color::GREEN;
 pub const ATTACK_LOCK_TEXT_COLOR: Color<f32> = Color::GRAY;
+pub const LEVEL_TEXT_COLOR: Color<f32> = Color {
+    r: 0.8,
+    g: 0.8,
+    b: 0.8,
+    a: 1.0,
+};
+pub const LEVEL_BACKGROUND_BACK_COLOR: Color<f32> = Color {
+    r: 0.3,
+    g: 0.3,
+    b: 0.3,
+    a: 1.0,
+};
+pub const LEVEL_BACKGROUND_FRONT_COLOR: Color<f32> = Color {
+    r: 0.5,
+    g: 0.5,
+    b: 0.5,
+    a: 1.0,
+};
 
 #[derive(Debug, Clone)]
 pub struct Player {

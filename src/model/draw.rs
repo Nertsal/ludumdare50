@@ -155,13 +155,19 @@ impl GameState {
         );
 
         // Experience
-        let exp_aabb = AABB::point(vec2(EXPERIENCE_BAR_SIZE.x, framebuffer_size.y / 2.0))
+        let exp_aabb = AABB::point(vec2(EXPERIENCE_BAR_SIZE.x * 2.0, framebuffer_size.y / 2.0))
             .extend_symmetric(EXPERIENCE_BAR_SIZE / 2.0);
         renderer.draw_aabb(exp_aabb, EXPERIENCE_BAR_BACKGROUND_COLOR);
         let exp_ratio = self.experience.exp as f32 / self.experience.exp_to_next_lvl as f32;
         let exp_bar = exp_aabb.extend_symmetric(vec2(-EXPERIENCE_BAR_INNER_SPACE, 0.0));
         let exp_bar = exp_bar.extend_up((exp_ratio - 1.0) * exp_bar.height());
         renderer.draw_aabb(exp_bar, EXPERIENCE_BAR_COLOR);
+        renderer.draw_aabb_frame(exp_aabb, EXPERIENCE_BORDER_WIDTH, EXPERIENCE_BORDER_COLOR);
+        let level_aabb = AABB::point(vec2(exp_aabb.center().x, exp_aabb.y_min))
+            .extend_uniform(EXPERIENCE_BAR_SIZE.x);
+        renderer.draw_level(self.experience.level, level_aabb);
+        let level_aabb = level_aabb.translate(vec2(0.0, exp_aabb.height()));
+        renderer.draw_level(self.experience.level + 1, level_aabb);
 
         // Upgrade menu
         if let Some(upgrade_menu) = &self.upgrade_menu {
