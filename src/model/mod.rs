@@ -54,6 +54,10 @@ pub const ATTACKS_WIDTH: f32 = 300.0;
 pub const ATTACKS_BORDER_WIDTH: f32 = 5.0;
 pub const ATTACKS_BORDER_COLOR: Color<f32> = Color::GRAY;
 pub const ULTIMATE_HEIGHT: f32 = 300.0;
+pub const EXPERIENCE_BAR_SIZE: Vec2<f32> = vec2(50.0, 600.0);
+pub const EXPERIENCE_BAR_INNER_SPACE: f32 = 5.0;
+pub const EXPERIENCE_BAR_BACKGROUND_COLOR: Color<f32> = Color::GRAY;
+pub const EXPERIENCE_BAR_COLOR: Color<f32> = Color::GREEN;
 
 #[derive(Debug, Clone)]
 pub struct Player {
