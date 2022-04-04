@@ -238,15 +238,7 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
         border_color: Color<f32>,
         font_size: f32,
     ) {
-        let aabb = aabb.extend_up(-font_size);
-        self.draw_text(
-            "ULTIMATE",
-            vec2(aabb.center().x, aabb.top_left().y),
-            vec2(0.5, 1.0),
-            font_size,
-            Color::MAGENTA,
-        );
-        let aabb = aabb.extend_up(-2.5 * font_size);
+        let aabb = aabb.extend_up(-3.5 * font_size);
 
         let cd_aabb = aabb
             .extend_up(ATTACK_COOLDOWN_HEIGHT - aabb.height() + aabb.width() * 0.1)
@@ -263,6 +255,13 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
         let boundary = ultimate.boundary();
         let (scale, offset) = scale_align_aabb(boundary.map(|x| x as f32), aabb);
         let aabb = aabb.translate(offset);
+        self.draw_text(
+            "ULTIMATE",
+            vec2(aabb.center().x, aabb.top_left().y + font_size),
+            vec2(0.5, 0.0),
+            font_size,
+            Color::MAGENTA,
+        );
 
         let tile_size = vec2(scale, scale);
         self.draw_grid(

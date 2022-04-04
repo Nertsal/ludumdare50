@@ -27,11 +27,11 @@ pub const UNIT_RADIUS: f32 = 0.25;
 pub const GRID_WIDTH: f32 = 0.05;
 pub const DAMAGE_WIDTH: f32 = 0.025;
 pub const DAMAGE_EXTRA_SPACE: f32 = 0.25;
-pub const UPGRADE_SIZE: Vec2<f32> = vec2(100.0, 100.0);
-pub const UPGRADE_EXTRA_SPACE: f32 = 50.0;
-pub const UPGRADE_FRAME_WIDTH: f32 = 1.0;
 
 // Things in screen coordinates
+pub const UPGRADE_SIZE: Vec2<f32> = vec2(200.0, 200.0);
+pub const UPGRADE_EXTRA_SPACE: f32 = 50.0;
+pub const UPGRADE_FRAME_WIDTH: f32 = 1.0;
 pub const ATTACKS_OFFSET: f32 = 25.0;
 pub const ATTACKS_WIDTH: f32 = 300.0;
 pub const ATTACKS_BORDER_WIDTH: f32 = 5.0;
