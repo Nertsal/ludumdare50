@@ -352,14 +352,11 @@ fn clamp_wrapped_coord(pos: Coord, wrapping: Vec2<Coord>, bounds: Vec2<Coord>) -
     }
 }
 
-fn attack_slots(score: Score) -> usize {
-    if score < 30 {
-        1
-    } else if score < 70 {
-        2
-    } else if score < 350 {
-        3
-    } else {
-        4
-    }
+pub fn attack_slots(score: Score) -> usize {
+    SLOTS_REQUIREMENTS
+        .iter()
+        .enumerate()
+        .find(|(_, &min)| min > score)
+        .map(|(i, _)| i)
+        .unwrap_or(SLOTS_REQUIREMENTS.len())
 }

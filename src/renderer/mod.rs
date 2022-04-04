@@ -2,7 +2,7 @@ use geng::Draw2d;
 
 use crate::model::{
     Attack, Teleport, Time, ATTACK_COOLDOWN_BACKGROUND_COLOR, ATTACK_COOLDOWN_BAR_EXTRA_SPACE,
-    ATTACK_COOLDOWN_COLOR, ATTACK_COOLDOWN_HEIGHT,
+    ATTACK_COOLDOWN_COLOR, ATTACK_COOLDOWN_HEIGHT, ATTACK_LOCK_TEXT_COLOR, SLOTS_REQUIREMENTS,
 };
 
 use super::*;
@@ -102,39 +102,67 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
     pub fn draw_attacks(
         &mut self,
         actions: &[Attack],
-        action_limit: usize,
+        attacks_count: usize,
+        available_attacks: usize,
         bounds: AABB<f32>,
         border_width: f32,
         border_color: Color<f32>,
     ) {
-        if action_limit == 0 {
+        if attacks_count == 0 {
             return;
         }
 
         let top_right = bounds.top_right();
         let bottom_left = bounds.bottom_left();
-        let single_height = bounds.height() / action_limit as f32;
+        let single_height = bounds.height() / attacks_count as f32;
         let single_aabb =
             AABB::from_corners(vec2(bottom_left.x, top_right.y - single_height), top_right);
 
         self.draw_grid(
-            AABB::from_corners(vec2(0, 0), vec2(0, action_limit as i32 - 1)),
+            AABB::from_corners(vec2(0, 0), vec2(0, attacks_count as i32 - 1)),
             single_aabb.size(),
             bottom_left,
             border_width,
             border_color,
         );
 
-        for (index, attack) in actions.iter().enumerate().take(action_limit) {
+        for (index, attack) in actions
+            .iter()
+            .map(|x| Some(x))
+            .chain((available_attacks..attacks_count).map(|_| None))
+            .enumerate()
+            .take(attacks_count)
+        {
             let aabb = single_aabb.translate(vec2(0.0, -single_height * index as f32));
             let cd_aabb = aabb
                 .extend_up(ATTACK_COOLDOWN_HEIGHT - aabb.height() + aabb.width() * 0.1)
                 .extend_uniform(-aabb.width() * 0.05);
-            self.draw_cooldown(attack.action.next, attack.action.cooldown, cd_aabb);
             let attack_aabb = aabb
                 .extend_down(-ATTACK_COOLDOWN_HEIGHT)
                 .extend_uniform(-aabb.width() * 0.1);
-            self.draw_attack(attack, attack_aabb);
+            match attack {
+                Some(attack) => {
+                    self.draw_cooldown(attack.action.next, attack.action.cooldown, cd_aabb);
+                    self.draw_attack(attack, attack_aabb);
+                }
+                None => {
+                    let aabb = AABB::point(attack_aabb.center())
+                        .extend_uniform(attack_aabb.width().min(attack_aabb.height()) / 2.0);
+                    draw_2d::TexturedQuad::new(aabb, &self.assets.lock).draw_2d(
+                        self.geng,
+                        self.framebuffer,
+                        self.camera,
+                    );
+                    let aabb = aabb
+                        .extend_uniform(-aabb.width() * 0.35)
+                        .translate(vec2(0.0, aabb.height() * (0.3 - 0.5)));
+                    self.draw_text_fit(
+                        &format!("{}", SLOTS_REQUIREMENTS[index]),
+                        aabb,
+                        ATTACK_LOCK_TEXT_COLOR,
+                    );
+                }
+            }
         }
     }
 

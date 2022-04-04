@@ -14,25 +14,38 @@ pub type Time = i32;
 pub type Score = u32;
 pub type Position = Vec2<Coord>;
 
-pub const FADE_COLOR: Color<f32> = Color::BLACK;
 pub const FADE_TIME: f32 = 2.0;
-pub const PLAYER_COLOR: Color<f32> = Color::BLUE;
 pub const PLAYER_ULTIMATE_ALPHA: f32 = 0.5;
 pub const INTERPOLATION_MAX_TIME: f32 = 0.2;
 pub const INTERPOLATION_MIN_SPEED: f32 = 5.0;
+pub const SLOTS_REQUIREMENTS: [Score; 4] = [0, 30, 70, 350];
 
 // Things in world coordinates
 pub const TILE_SIZE: Vec2<f32> = vec2(1.0, 1.0);
 pub const UNIT_RADIUS: f32 = 0.25;
 pub const GRID_WIDTH: f32 = 0.05;
-pub const GRID_COLOR: Color<f32> = Color::GRAY;
-pub const WRAP_COLOR: Color<f32> = Color::CYAN;
 pub const DAMAGE_WIDTH: f32 = 0.025;
-pub const DAMAGE_COLOR: Color<f32> = Color::RED;
 pub const DAMAGE_EXTRA_SPACE: f32 = 0.25;
 pub const UPGRADE_SIZE: Vec2<f32> = vec2(100.0, 100.0);
 pub const UPGRADE_EXTRA_SPACE: f32 = 50.0;
 pub const UPGRADE_FRAME_WIDTH: f32 = 1.0;
+
+// Things in screen coordinates
+pub const ATTACKS_OFFSET: f32 = 25.0;
+pub const ATTACKS_WIDTH: f32 = 300.0;
+pub const ATTACKS_BORDER_WIDTH: f32 = 5.0;
+pub const ULTIMATE_HEIGHT: f32 = 300.0;
+pub const EXPERIENCE_BAR_SIZE: Vec2<f32> = vec2(50.0, 600.0);
+pub const EXPERIENCE_BAR_INNER_SPACE: f32 = 5.0;
+pub const ATTACK_COOLDOWN_BAR_EXTRA_SPACE: f32 = 3.0;
+pub const ATTACK_COOLDOWN_HEIGHT: f32 = 15.0;
+
+// Colors
+pub const FADE_COLOR: Color<f32> = Color::BLACK;
+pub const PLAYER_COLOR: Color<f32> = Color::BLUE;
+pub const GRID_COLOR: Color<f32> = Color::GRAY;
+pub const WRAP_COLOR: Color<f32> = Color::CYAN;
+pub const DAMAGE_COLOR: Color<f32> = Color::RED;
 pub const UPGRADE_FRAME_COLOR: Color<f32> = Color::GREEN;
 pub const UPGRADE_BACKGROUND_COLOR: Color<f32> = Color {
     r: 0.3,
@@ -47,21 +60,12 @@ pub const UPGRADE_SELECTED_COLOR: Color<f32> = Color {
     b: 0.5,
     a: 0.8,
 };
-
-// Things in screen coordinates
-pub const ATTACKS_OFFSET: f32 = 25.0;
-pub const ATTACKS_WIDTH: f32 = 300.0;
-pub const ATTACKS_BORDER_WIDTH: f32 = 5.0;
 pub const ATTACKS_BORDER_COLOR: Color<f32> = Color::GRAY;
-pub const ULTIMATE_HEIGHT: f32 = 300.0;
-pub const EXPERIENCE_BAR_SIZE: Vec2<f32> = vec2(50.0, 600.0);
-pub const EXPERIENCE_BAR_INNER_SPACE: f32 = 5.0;
 pub const EXPERIENCE_BAR_BACKGROUND_COLOR: Color<f32> = Color::GRAY;
 pub const EXPERIENCE_BAR_COLOR: Color<f32> = Color::GREEN;
-pub const ATTACK_COOLDOWN_BAR_EXTRA_SPACE: f32 = 3.0;
-pub const ATTACK_COOLDOWN_HEIGHT: f32 = 15.0;
 pub const ATTACK_COOLDOWN_BACKGROUND_COLOR: Color<f32> = Color::GRAY;
 pub const ATTACK_COOLDOWN_COLOR: Color<f32> = Color::GREEN;
+pub const ATTACK_LOCK_TEXT_COLOR: Color<f32> = Color::GRAY;
 
 #[derive(Debug, Clone)]
 pub struct Player {

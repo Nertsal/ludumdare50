@@ -110,6 +110,7 @@ impl GameState {
         renderer.draw_attacks(
             &self.player_attacks,
             4,
+            logic::attack_slots(*self.highscore),
             attacks_aabb,
             ATTACKS_BORDER_WIDTH,
             ATTACKS_BORDER_COLOR,

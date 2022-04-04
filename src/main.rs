@@ -1,11 +1,13 @@
 use geng::prelude::*;
 
+mod logic;
 mod model;
 mod renderer;
-mod logic;
 
 #[derive(geng::Assets)]
-pub struct Assets {}
+pub struct Assets {
+    pub lock: ugli::Texture,
+}
 
 fn main() {
     logger::init().unwrap();
@@ -19,7 +21,8 @@ fn main() {
         geng::LoadingScreen::new(&geng, geng::EmptyLoadingScreen, assets, {
             let geng = geng.clone();
             move |assets| {
-                let assets = assets.unwrap();
+                let mut assets = assets.unwrap();
+                assets.lock.set_filter(ugli::Filter::Nearest);
                 model::GameState::new(&geng, &Rc::new(assets))
             }
         }),
