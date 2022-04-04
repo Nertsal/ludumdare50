@@ -290,9 +290,7 @@ impl GameState {
                     }
 
                     menu.lvl_ups_left -= 1;
-                    if menu.lvl_ups_left > 0 {
-                        self.upgrade_menu = Some(menu);
-                    }
+                    self.upgrade(menu.lvl_ups_left);
                     self.play_sound(self.assets.select.play());
                 }
             }
