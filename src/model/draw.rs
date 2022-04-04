@@ -202,7 +202,7 @@ impl GameState {
                     UpgradeType::IncUltRadius => "+1 TP RADIUS",
                     UpgradeType::ReduceUltCooldown => "-1 TP CD",
                     UpgradeType::IncDeathTimer => "+2 SEC LIFE",
-                    UpgradeType::ReduceAttackCooldown => "-2 ATTACK CD",
+                    UpgradeType::ReduceAttackCooldown => "-20% ATTACK CD",
                     UpgradeType::UpgradeAttack => "UPGRADE",
                 };
                 renderer.draw_text_fit(
