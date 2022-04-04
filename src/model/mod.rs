@@ -465,7 +465,7 @@ impl Experience {
         self.exp += exp;
         let mut lvl_ups = 0;
         while self.exp >= self.exp_to_next_lvl {
-            self.exp -= self.exp_to_next_lvl;
+            // self.exp -= self.exp_to_next_lvl;
             lvl_ups += 1;
             self.level += 1;
             self.exp_to_next_lvl = LEVEL_SCORES[self.level as usize];
