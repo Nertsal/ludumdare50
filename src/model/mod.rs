@@ -136,14 +136,15 @@ pub struct UpgradeInfo {
     pub max: usize,
 }
 
+pub enum Requirement {
+    None,
+    Score(Score),
+    AttackSlots(usize),
+}
+
 pub enum Upgrade {
-    Global {
-        info: UpgradeInfo,
-        requirement: Score,
-    },
-    Attack {
-        info: Vec<UpgradeInfo>,
-    },
+    Global { info: UpgradeInfo },
+    Attack { info: Vec<UpgradeInfo> },
 }
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
@@ -412,5 +413,28 @@ impl Experience {
             lvl_ups += 1;
         }
         lvl_ups
+    }
+}
+
+impl Requirement {
+    pub fn check(&self, score: Score, attack_slots: usize) -> bool {
+        match self {
+            Self::None => true,
+            Self::Score(min) => score >= *min,
+            Self::AttackSlots(min) => attack_slots >= *min,
+        }
+    }
+}
+
+impl UpgradeType {
+    pub fn requirement(&self, current_level: usize) -> Requirement {
+        match self {
+            Self::NewAttack => Requirement::AttackSlots(current_level + 2),
+            Self::IncUltRadius => Requirement::Score(30),
+            Self::ReduceUltCooldown => Requirement::Score(100),
+            Self::IncDeathTimer => Requirement::None,
+            Self::ReduceAttackCooldown => Requirement::None,
+            Self::UpgradeAttack => Requirement::None,
+        }
     }
 }

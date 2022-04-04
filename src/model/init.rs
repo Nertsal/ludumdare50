@@ -58,28 +58,24 @@ impl GameState {
                     UpgradeType::NewAttack,
                     Upgrade::Global {
                         info: UpgradeInfo::new(3),
-                        requirement: 0,
                     },
                 ),
                 (
                     UpgradeType::IncUltRadius,
                     Upgrade::Global {
                         info: UpgradeInfo::new(2),
-                        requirement: 30,
                     },
                 ),
                 (
                     UpgradeType::ReduceUltCooldown,
                     Upgrade::Global {
                         info: UpgradeInfo::new(2),
-                        requirement: 100,
                     },
                 ),
                 (
                     UpgradeType::IncDeathTimer,
                     Upgrade::Global {
                         info: UpgradeInfo::new(2),
-                        requirement: 0,
                     },
                 ),
             ]

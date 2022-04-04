@@ -188,16 +188,24 @@ impl GameState {
         if lvl_ups > 0 {
             let options = self
                 .upgrades
-                .iter()
+                .iter_mut()
                 .filter_map(|(&typ, upgrade)| match upgrade {
-                    Upgrade::Global { info, requirement } => {
-                        if self.score >= *requirement && info.current < info.max {
+                    Upgrade::Global { info } => {
+                        let meet_requirement = typ
+                            .requirement(info.current)
+                            .check(self.score, attack_slots(*self.highscore));
+                        if meet_requirement && info.current < info.max {
                             Some((typ, vec![]))
                         } else {
                             None
                         }
                     }
                     Upgrade::Attack { info } => {
+                        let attack_slots = attack_slots(*self.highscore);
+                        while info.len() < attack_slots {
+                            info.push(UpgradeInfo::new(info[0].max));
+                        }
+
                         let options = info
                             .iter()
                             .enumerate()
@@ -341,5 +349,17 @@ fn clamp_wrapped_coord(pos: Coord, wrapping: Vec2<Coord>, bounds: Vec2<Coord>) -
     } else {
         // Same side
         pos.clamp(min, max)
+    }
+}
+
+fn attack_slots(score: Score) -> usize {
+    if score < 30 {
+        1
+    } else if score < 70 {
+        2
+    } else if score < 350 {
+        3
+    } else {
+        4
     }
 }
