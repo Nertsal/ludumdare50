@@ -40,7 +40,7 @@ impl GameState {
             damages: vec![],
             player_attacks: initial_attacks().collect(),
             potential_attacks: potential_attacks().collect(),
-            player_ultimate: Teleport::new(5, 2),
+            player_ultimate: Teleport::new(5, 1),
             upgrades: [
                 (
                     UpgradeType::ReduceAttackCooldown,
