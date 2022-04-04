@@ -205,7 +205,6 @@ impl GameState {
             let left_pos =
                 framebuffer_size / 2.0 - vec2((upgrades_width - UPGRADE_SIZE.x) / 2.0, 0.0);
             for (i, (upgrade, attack_index)) in upgrade_menu.options.iter().enumerate() {
-                let attack_index = attack_index.map(|i| i + 1);
                 let aabb = upgrade_aabb.translate(
                     left_pos + i as f32 * vec2(UPGRADE_SIZE.x + UPGRADE_EXTRA_SPACE, 0.0),
                 );
@@ -217,7 +216,7 @@ impl GameState {
                     );
                 }
                 let aabb = aabb.extend_uniform(-UPGRADE_SIZE.x * 0.1);
-                let text = match upgrade {
+                let texts = match upgrade {
                     UpgradeType::NewAttack => {
                         let text_aabb = aabb.extend_down(-aabb.height() / 2.0);
                         renderer.draw_text_fit(
@@ -232,17 +231,34 @@ impl GameState {
                             UPGRADE_TEXT_COLOR,
                         );
                         renderer.draw_attack(new_attack, aabb.extend_up(-aabb.height() / 2.0));
-                        format!("")
+                        vec![]
                     }
-                    UpgradeType::IncUltRadius => format!("+1 TP Radius"),
-                    UpgradeType::ReduceUltCooldown => format!("-1 TP Cooldown"),
-                    UpgradeType::IncDeathTimer => format!("+2 sec Life"),
+                    UpgradeType::IncUltRadius => vec![format!("+1 TP Radius")],
+                    UpgradeType::ReduceUltCooldown => vec![format!("-1 TP Cooldown")],
+                    UpgradeType::IncDeathTimer => vec![format!("+2 sec Life")],
                     UpgradeType::ReduceAttackCooldown => {
-                        format!("-20% Cooldown {}", attack_index.unwrap())
+                        let attack = &self.player_attacks[attack_index.unwrap()];
+                        vec![
+                            format!("-Cooldown {}", attack_index.unwrap() + 1),
+                            format!(
+                                "({} -> {})",
+                                attack.action.cooldown,
+                                attack.action.cooldown - 1
+                            ),
+                        ]
                     }
-                    UpgradeType::UpgradeAttack => format!("Upgrade {}", attack_index.unwrap()),
+                    UpgradeType::UpgradeAttack => {
+                        vec![format!("Upgrade {}", attack_index.unwrap() + 1)]
+                    }
                 };
-                renderer.draw_text_fit(&text, aabb, UPGRADE_TEXT_COLOR);
+                if texts.len() > 0 {
+                    let mut aabb =
+                        aabb.extend_down(-aabb.height() * (1.0 - 1.0 / texts.len() as f32));
+                    for text in &texts {
+                        renderer.draw_text_fit(text, aabb, UPGRADE_TEXT_COLOR);
+                        aabb = aabb.translate(vec2(0.0, -aabb.height()));
+                    }
+                }
             }
         }
 

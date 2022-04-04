@@ -226,15 +226,22 @@ impl GameState {
                         }
                     }
                     Upgrade::Attack { info } => {
-                        let attack_slots = attack_slots(*self.highscore);
-                        while info.len() < attack_slots {
+                        while info.len() < self.player_attacks.len() {
                             info.push(UpgradeInfo::new(info[0].max));
                         }
 
                         let attack_index = info
                             .iter()
                             .enumerate()
-                            .filter(|(_, info)| info.current < info.max)
+                            .filter(|(i, info)| {
+                                info.current < info.max
+                                    && match typ {
+                                        UpgradeType::ReduceAttackCooldown => {
+                                            self.player_attacks[*i].action.cooldown > 2
+                                        }
+                                        _ => true,
+                                    }
+                            })
                             .map(|(i, _)| i)
                             .choose(&mut global_rng());
                         attack_index.map(|i| ((typ, Some(i))))
