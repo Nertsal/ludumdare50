@@ -1,6 +1,9 @@
 use geng::Draw2d;
 
-use crate::model::{Attack, Teleport};
+use crate::model::{
+    Attack, Teleport, Time, ATTACK_COOLDOWN_BACKGROUND_COLOR, ATTACK_COOLDOWN_BAR_EXTRA_SPACE,
+    ATTACK_COOLDOWN_COLOR, ATTACK_COOLDOWN_HEIGHT,
+};
 
 use super::*;
 
@@ -124,8 +127,40 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
 
         for (index, attack) in actions.iter().enumerate().take(action_limit) {
             let aabb = single_aabb.translate(vec2(0.0, -single_height * index as f32));
-            let aabb = aabb.extend_uniform(-aabb.width() * 0.1);
-            self.draw_attack(attack, aabb);
+            let cd_aabb = aabb
+                .extend_up(ATTACK_COOLDOWN_HEIGHT - aabb.height() + aabb.width() * 0.1)
+                .extend_uniform(-aabb.width() * 0.05);
+            self.draw_cooldown(attack.action.next, attack.action.cooldown, cd_aabb);
+            let attack_aabb = aabb
+                .extend_down(-ATTACK_COOLDOWN_HEIGHT)
+                .extend_uniform(-aabb.width() * 0.1);
+            self.draw_attack(attack, attack_aabb);
+        }
+    }
+
+    pub fn draw_cooldown(&mut self, time_left: Time, cooldown: Time, aabb: AABB<f32>) {
+        let cooldown = cooldown - 1;
+        if cooldown <= 0 {
+            return;
+        }
+
+        let single_width = aabb.width() / cooldown as f32;
+        let single_aabb = AABB::ZERO.extend_positive(vec2(single_width, aabb.height()));
+        for time in 1..=cooldown {
+            let aabb = single_aabb.translate(
+                aabb.bottom_left()
+                    + vec2(
+                        (time as f32 - 1.0) * (single_width + ATTACK_COOLDOWN_BAR_EXTRA_SPACE),
+                        0.0,
+                    ),
+            );
+            self.draw_aabb(aabb, ATTACK_COOLDOWN_BACKGROUND_COLOR);
+            if time < time_left {
+                self.draw_aabb(
+                    aabb.extend_uniform(-ATTACK_COOLDOWN_BAR_EXTRA_SPACE),
+                    ATTACK_COOLDOWN_COLOR,
+                );
+            }
         }
     }
 

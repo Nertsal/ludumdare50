@@ -58,6 +58,10 @@ pub const EXPERIENCE_BAR_SIZE: Vec2<f32> = vec2(50.0, 600.0);
 pub const EXPERIENCE_BAR_INNER_SPACE: f32 = 5.0;
 pub const EXPERIENCE_BAR_BACKGROUND_COLOR: Color<f32> = Color::GRAY;
 pub const EXPERIENCE_BAR_COLOR: Color<f32> = Color::GREEN;
+pub const ATTACK_COOLDOWN_BAR_EXTRA_SPACE: f32 = 3.0;
+pub const ATTACK_COOLDOWN_HEIGHT: f32 = 15.0;
+pub const ATTACK_COOLDOWN_BACKGROUND_COLOR: Color<f32> = Color::GRAY;
+pub const ATTACK_COOLDOWN_COLOR: Color<f32> = Color::GREEN;
 
 #[derive(Debug, Clone)]
 pub struct Player {
