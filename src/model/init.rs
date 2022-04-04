@@ -30,7 +30,7 @@ impl GameState {
                 speed: -1.0 / FADE_TIME,
             },
             camera: Camera2d {
-                center: Vec2::ZERO,
+                center: TILE_SIZE / 2.0,
                 rotation: 0.0,
                 fov: 15.0,
             },

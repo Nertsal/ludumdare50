@@ -3,6 +3,8 @@ use super::*;
 impl GameState {
     pub fn draw(&mut self, framebuffer: &mut ugli::Framebuffer) {
         let framebuffer_size = framebuffer.size().map(|x| x as f32);
+
+        // Game camera
         let mut renderer = Renderer::new(&self.geng, &self.assets, &self.camera, framebuffer);
 
         // Grid
@@ -99,6 +101,7 @@ impl GameState {
             renderer.draw_cross(aabb, DAMAGE_WIDTH, DAMAGE_COLOR);
         }
 
+        // UI camera
         let framebuffer_size = vec2(
             self.ui_camera.fov / framebuffer_size.y * framebuffer_size.x,
             self.ui_camera.fov,
@@ -160,6 +163,14 @@ impl GameState {
             20.0,
             Color::GRAY,
         );
+        let time_aabb = AABB::point(vec2(framebuffer_size.x / 2.0, framebuffer_size.y - 100.0))
+            .extend_symmetric(TIME_BAR_SIZE / 2.0);
+        renderer.draw_aabb(time_aabb, TIME_BAR_BACKGROUND_COLOR);
+        let time_ratio = self.move_time_left / self.move_time_limit;
+        let time_bar = time_aabb.extend_symmetric(vec2(0.0, -TIME_BAR_INNER_SPACE));
+        let time_bar = time_bar.extend_right((time_ratio - 1.0) * time_bar.width());
+        renderer.draw_aabb(time_bar, TIME_BAR_COLOR);
+        renderer.draw_aabb_frame(time_aabb, TIME_BORDER_WIDTH, TIME_BORDER_COLOR);
 
         // Experience
         let exp_aabb = AABB::point(vec2(EXPERIENCE_BAR_SIZE.x * 2.0, framebuffer_size.y / 2.0))

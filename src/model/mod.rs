@@ -39,6 +39,9 @@ pub const ULTIMATE_HEIGHT: f32 = 300.0;
 pub const EXPERIENCE_BAR_SIZE: Vec2<f32> = vec2(50.0, 600.0);
 pub const EXPERIENCE_BAR_INNER_SPACE: f32 = 5.0;
 pub const EXPERIENCE_BORDER_WIDTH: f32 = 5.0;
+pub const TIME_BAR_SIZE: Vec2<f32> = vec2(300.0, 20.0);
+pub const TIME_BAR_INNER_SPACE: f32 = 5.0;
+pub const TIME_BORDER_WIDTH: f32 = 5.0;
 pub const ATTACK_COOLDOWN_BAR_EXTRA_SPACE: f32 = 3.0;
 pub const ATTACK_COOLDOWN_HEIGHT: f32 = 15.0;
 pub const LEVEL_OUTER_SPACE: f32 = 10.0;
@@ -97,6 +100,19 @@ pub const LEVEL_BACKGROUND_FRONT_COLOR: Color<f32> = Color {
     r: 0.5,
     g: 0.5,
     b: 0.5,
+    a: 1.0,
+};
+pub const TIME_BAR_BACKGROUND_COLOR: Color<f32> = Color {
+    r: 0.1,
+    g: 0.1,
+    b: 0.4,
+    a: 1.0,
+};
+pub const TIME_BAR_COLOR: Color<f32> = Color::GREEN;
+pub const TIME_BORDER_COLOR: Color<f32> = Color {
+    r: 0.2,
+    g: 0.2,
+    b: 0.2,
     a: 1.0,
 };
 
