@@ -1,6 +1,11 @@
 use super::*;
 
 impl GameState {
+    pub fn reset(&mut self) {
+        let state = Self::new(&self.geng, &self.assets);
+        *self = state;
+    }
+
     pub fn new(geng: &Geng, assets: &Rc<Assets>) -> Self {
         Self {
             geng: geng.clone(),

@@ -202,8 +202,12 @@ impl geng::State for GameState {
         // Fade
         self.fade.current =
             (self.fade.current + self.fade.speed * delta_time).clamp(self.fade.min, self.fade.max);
+        if self.fade.current == self.fade.max {
+            self.reset();
+        }
 
         if self.player.is_dead {
+            self.fade.speed = self.fade.speed.abs();
             return;
         }
 
