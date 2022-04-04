@@ -214,6 +214,18 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
         );
         let aabb = aabb.extend_up(-2.5 * font_size);
 
+        let cd_aabb = aabb
+            .extend_up(ATTACK_COOLDOWN_HEIGHT - aabb.height() + aabb.width() * 0.1)
+            .extend_uniform(-aabb.width() * 0.05);
+        self.draw_cooldown(
+            ultimate.action.next + 1,
+            ultimate.action.cooldown + 1,
+            cd_aabb,
+        );
+        let aabb = aabb
+            .extend_down(-ATTACK_COOLDOWN_HEIGHT)
+            .extend_uniform(-aabb.width() * 0.1);
+
         let boundary = ultimate.boundary();
         let (scale, offset) = scale_align_aabb(boundary.map(|x| x as f32), aabb);
         let aabb = aabb.translate(offset);
