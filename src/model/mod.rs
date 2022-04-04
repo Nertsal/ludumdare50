@@ -418,7 +418,8 @@ impl Attack {
     }
 
     pub fn upgrade(&mut self) {
-        if let Some(attack) = self.upgrade.take() {
+        if let Some(mut attack) = self.upgrade.take() {
+            attack.action.cooldown = self.action.cooldown;
             *self = *attack;
         }
     }
