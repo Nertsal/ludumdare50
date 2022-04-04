@@ -216,17 +216,17 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
             Color::GRAY,
         );
 
-        self.draw_circle_with_cut(
+        self.draw_circle(
             aabb.center(),
-            scale / 2.0 * 0.7,
-            scale / 2.0 * 0.8,
+            // scale / 2.0 * 0.7,
+            scale / 2.0 * 0.5,
             model::PLAYER_COLOR,
         );
         for pos in attack.attack_positions(Vec2::ZERO) {
             let aabb = logic::grid_cell_aabb(pos, tile_size)
                 .translate(aabb.center())
-                .extend_uniform(-scale * 0.2);
-            self.draw_cross(aabb, scale * 0.1, Color::RED)
+                .extend_uniform(-scale * 0.25);
+            self.draw_cross(aabb, scale * 0.05, Color::RED)
         }
     }
 
@@ -272,18 +272,18 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
             border_color,
         );
 
-        self.draw_circle_with_cut(
-            aabb.center(),
-            scale / 2.0 * 0.7,
-            scale / 2.0 * 0.8,
-            model::PLAYER_COLOR,
-        );
         for pos in ultimate
             .deltas()
             .map(|pos| logic::grid_cell_aabb(pos, tile_size).center())
         {
             self.draw_circle(pos + aabb.center(), scale * 0.1, Color::MAGENTA);
         }
+        self.draw_circle(
+            aabb.center(),
+            // scale / 2.0 * 0.7,
+            scale / 2.0 * 0.5,
+            model::PLAYER_COLOR,
+        );
     }
 
     pub fn draw_cross(&mut self, aabb: AABB<f32>, width: f32, color: Color<f32>) {
