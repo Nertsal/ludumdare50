@@ -135,7 +135,7 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
         for (index, attack) in actions
             .iter()
             .map(|x| Some(x))
-            .chain((available_attacks..attacks_count).map(|_| None))
+            .chain((actions.len()..attacks_count).map(|_| None))
             .enumerate()
             .take(attacks_count)
         {
@@ -152,21 +152,23 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
                     self.draw_attack(attack, attack_aabb);
                 }
                 None => {
-                    let aabb = AABB::point(attack_aabb.center())
-                        .extend_uniform(attack_aabb.width().min(attack_aabb.height()) / 2.0);
-                    draw_2d::TexturedQuad::new(aabb, &self.assets.lock).draw_2d(
-                        self.geng,
-                        self.framebuffer,
-                        self.camera,
-                    );
-                    let aabb = aabb
-                        .extend_uniform(-aabb.width() * 0.35)
-                        .translate(vec2(0.0, aabb.height() * (0.3 - 0.5)));
-                    self.draw_text_fit(
-                        &format!("{}", SLOTS_REQUIREMENTS[index]),
-                        aabb,
-                        ATTACK_LOCK_TEXT_COLOR,
-                    );
+                    if index >= available_attacks {
+                        let aabb = AABB::point(attack_aabb.center())
+                            .extend_uniform(attack_aabb.width().min(attack_aabb.height()) / 2.0);
+                        draw_2d::TexturedQuad::new(aabb, &self.assets.lock).draw_2d(
+                            self.geng,
+                            self.framebuffer,
+                            self.camera,
+                        );
+                        let aabb = aabb
+                            .extend_uniform(-aabb.width() * 0.35)
+                            .translate(vec2(0.0, aabb.height() * (0.3 - 0.5)));
+                        self.draw_text_fit(
+                            &format!("{}", SLOTS_REQUIREMENTS[index]),
+                            aabb,
+                            ATTACK_LOCK_TEXT_COLOR,
+                        );
+                    }
                 }
             }
         }
