@@ -255,6 +255,9 @@ impl geng::State for GameState {
                 geng::Key::Enter => {
                     self.select_upgrade();
                 }
+                geng::Key::R => {
+                    self.player.is_dead = true;
+                }
                 _ => {}
             },
             _ => {}
