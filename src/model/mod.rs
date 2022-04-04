@@ -19,6 +19,7 @@ pub const PLAYER_ULTIMATE_ALPHA: f32 = 0.5;
 pub const INTERPOLATION_MAX_TIME: f32 = 0.2;
 pub const INTERPOLATION_MIN_SPEED: f32 = 5.0;
 pub const SLOTS_REQUIREMENTS: [Score; 4] = [0, 30, 70, 350];
+pub const LEVEL_SCORES: [Score; 11] = [3, 8, 15, 26, 40, 60, 85, 120, 170, 235, 300];
 
 // Things in world coordinates
 pub const TILE_SIZE: Vec2<f32> = vec2(1.0, 1.0);
@@ -458,7 +459,7 @@ impl Experience {
         Self {
             level: 0,
             exp: 0,
-            exp_to_next_lvl: 5,
+            exp_to_next_lvl: LEVEL_SCORES[0],
         }
     }
 
@@ -468,6 +469,8 @@ impl Experience {
         while self.exp >= self.exp_to_next_lvl {
             self.exp -= self.exp_to_next_lvl;
             lvl_ups += 1;
+            self.level += 1;
+            self.exp_to_next_lvl = LEVEL_SCORES[self.level as usize];
         }
         lvl_ups
     }
