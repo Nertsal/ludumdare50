@@ -216,8 +216,24 @@ impl GameState {
                         UPGRADE_SELECTED_COLOR,
                     );
                 }
+                let aabb = aabb.extend_uniform(-UPGRADE_SIZE.x * 0.1);
                 let text = match upgrade {
-                    UpgradeType::NewAttack => format!("New"),
+                    UpgradeType::NewAttack => {
+                        let text_aabb = aabb.extend_down(-aabb.height() / 2.0);
+                        renderer.draw_text_fit(
+                            "New",
+                            text_aabb.extend_down(-text_aabb.height() / 2.0),
+                            UPGRADE_TEXT_COLOR,
+                        );
+                        let new_attack = &self.potential_attacks[attack_index.unwrap()];
+                        renderer.draw_text_fit(
+                            &format!("Cooldown {}", new_attack.action.cooldown),
+                            text_aabb.extend_up(-text_aabb.height() / 2.0),
+                            UPGRADE_TEXT_COLOR,
+                        );
+                        renderer.draw_attack(new_attack, aabb.extend_up(-aabb.height() / 2.0));
+                        format!("")
+                    }
                     UpgradeType::IncUltRadius => format!("+1 TP Radius"),
                     UpgradeType::ReduceUltCooldown => format!("-1 TP Cooldown"),
                     UpgradeType::IncDeathTimer => format!("+2 sec Life"),
@@ -226,11 +242,7 @@ impl GameState {
                     }
                     UpgradeType::UpgradeAttack => format!("Upgrade {}", attack_index.unwrap()),
                 };
-                renderer.draw_text_fit(
-                    &text,
-                    aabb.extend_uniform(-UPGRADE_SIZE.x * 0.1),
-                    UPGRADE_TEXT_COLOR,
-                );
+                renderer.draw_text_fit(&text, aabb, UPGRADE_TEXT_COLOR);
             }
         }
 

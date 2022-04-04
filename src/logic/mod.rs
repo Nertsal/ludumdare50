@@ -213,7 +213,14 @@ impl GameState {
                             .requirement(info.current)
                             .check(self.score, attack_slots(*self.highscore));
                         if meet_requirement && info.current < info.max {
-                            Some((typ, None))
+                            match typ {
+                                UpgradeType::NewAttack => {
+                                    let attack_index =
+                                        (0..self.potential_attacks.len()).choose(&mut global_rng());
+                                    attack_index.map(|i| (typ, Some(i)))
+                                }
+                                _ => Some((typ, None)),
+                            }
                         } else {
                             None
                         }
@@ -250,10 +257,7 @@ impl GameState {
                 if let Some(upgrade) = self.upgrades.get_mut(upgrade_type) {
                     match upgrade_type {
                         UpgradeType::NewAttack => {
-                            let attack_index = (0..self.potential_attacks.len())
-                                .choose(&mut global_rng())
-                                .unwrap();
-                            let attack = self.potential_attacks.remove(attack_index);
+                            let attack = self.potential_attacks.remove(attack_index.unwrap());
                             self.player_attacks.push(attack);
                         }
                         UpgradeType::IncUltRadius => {
