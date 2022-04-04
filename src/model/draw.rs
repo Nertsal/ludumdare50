@@ -204,7 +204,8 @@ impl GameState {
             let upgrade_aabb = AABB::ZERO.extend_symmetric(UPGRADE_SIZE / 2.0);
             let left_pos =
                 framebuffer_size / 2.0 - vec2((upgrades_width - UPGRADE_SIZE.x) / 2.0, 0.0);
-            for (i, (upgrade, _)) in upgrade_menu.options.iter().enumerate() {
+            for (i, (upgrade, attack_index)) in upgrade_menu.options.iter().enumerate() {
+                let attack_index = attack_index.map(|i| i + 1);
                 let aabb = upgrade_aabb.translate(
                     left_pos + i as f32 * vec2(UPGRADE_SIZE.x + UPGRADE_EXTRA_SPACE, 0.0),
                 );
@@ -216,15 +217,17 @@ impl GameState {
                     );
                 }
                 let text = match upgrade {
-                    UpgradeType::NewAttack => "NEW",
-                    UpgradeType::IncUltRadius => "+1 TP RADIUS",
-                    UpgradeType::ReduceUltCooldown => "-1 TP CD",
-                    UpgradeType::IncDeathTimer => "+2 SEC LIFE",
-                    UpgradeType::ReduceAttackCooldown => "-20% ATTACK CD",
-                    UpgradeType::UpgradeAttack => "UPGRADE",
+                    UpgradeType::NewAttack => format!("New"),
+                    UpgradeType::IncUltRadius => format!("+1 TP Radius"),
+                    UpgradeType::ReduceUltCooldown => format!("-1 TP Cooldown"),
+                    UpgradeType::IncDeathTimer => format!("+2 sec Life"),
+                    UpgradeType::ReduceAttackCooldown => {
+                        format!("-20% Cooldown {}", attack_index.unwrap())
+                    }
+                    UpgradeType::UpgradeAttack => format!("Upgrade {}", attack_index.unwrap()),
                 };
                 renderer.draw_text_fit(
-                    text,
+                    &text,
                     aabb.extend_uniform(-UPGRADE_SIZE.x * 0.1),
                     UPGRADE_TEXT_COLOR,
                 );

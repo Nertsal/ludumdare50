@@ -213,7 +213,7 @@ pub enum UpgradeType {
 
 pub struct UpgradeMenu {
     pub lvl_ups_left: usize,
-    pub options: Vec<(UpgradeType, Vec<usize>)>,
+    pub options: Vec<(UpgradeType, Option<usize>)>,
     pub choice: usize,
 }
 

@@ -213,7 +213,7 @@ impl GameState {
                             .requirement(info.current)
                             .check(self.score, attack_slots(*self.highscore));
                         if meet_requirement && info.current < info.max {
-                            Some((typ, vec![]))
+                            Some((typ, None))
                         } else {
                             None
                         }
@@ -224,17 +224,13 @@ impl GameState {
                             info.push(UpgradeInfo::new(info[0].max));
                         }
 
-                        let options = info
+                        let attack_index = info
                             .iter()
                             .enumerate()
                             .filter(|(_, info)| info.current < info.max)
                             .map(|(i, _)| i)
-                            .collect::<Vec<_>>();
-                        if options.is_empty() {
-                            None
-                        } else {
-                            Some((typ, options))
-                        }
+                            .choose(&mut global_rng());
+                        attack_index.map(|i| ((typ, Some(i))))
                     }
                 });
             let options = options.choose_multiple(&mut global_rng(), 3);
@@ -250,8 +246,7 @@ impl GameState {
 
     pub fn select_upgrade(&mut self) {
         if let Some(mut menu) = self.upgrade_menu.take() {
-            if let Some((upgrade_type, attack_options)) = menu.options.get(menu.choice) {
-                let attack_index = attack_options.choose(&mut global_rng());
+            if let Some((upgrade_type, attack_index)) = menu.options.get(menu.choice) {
                 if let Some(upgrade) = self.upgrades.get_mut(upgrade_type) {
                     match upgrade_type {
                         UpgradeType::NewAttack => {
@@ -272,14 +267,14 @@ impl GameState {
                         }
                         UpgradeType::ReduceAttackCooldown => {
                             self.player_attacks
-                                .get_mut(*attack_index.unwrap())
+                                .get_mut(attack_index.unwrap())
                                 .unwrap()
                                 .action
                                 .cooldown_multiplier *= 0.8;
                         }
                         UpgradeType::UpgradeAttack => {
                             self.player_attacks
-                                .get_mut(*attack_index.unwrap())
+                                .get_mut(attack_index.unwrap())
                                 .unwrap()
                                 .upgrade();
                         }
@@ -290,7 +285,7 @@ impl GameState {
                             info.current += 1;
                         }
                         Upgrade::Attack { info } => {
-                            info.get_mut(*attack_index.unwrap()).unwrap().current += 1;
+                            info.get_mut(attack_index.unwrap()).unwrap().current += 1;
                         }
                     }
 
