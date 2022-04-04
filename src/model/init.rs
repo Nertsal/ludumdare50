@@ -14,10 +14,11 @@ impl GameState {
             highscore: AutoSave::load(static_path().join("highscore.json").to_str().unwrap()),
             score: 0,
             move_time_limit: 6.0,
-            move_time_left: 10.0,
+            move_time_left: 6.0,
             experience: Experience::new(),
             using_ultimate: None,
             upgrade_menu: None,
+            freeze_move_timer: true,
             fade: Fade {
                 min: 0.0,
                 max: 1.0,

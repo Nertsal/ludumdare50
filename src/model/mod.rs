@@ -176,6 +176,7 @@ pub struct GameState {
     pub experience: Experience,
     pub move_time_limit: f32,
     pub move_time_left: f32,
+    pub freeze_move_timer: bool,
     pub player_attacks: Vec<Attack>,
     pub potential_attacks: Vec<Attack>,
     pub player_ultimate: Teleport,
@@ -213,12 +214,14 @@ impl geng::State for GameState {
 
         // Player move limit
         if self.upgrade_menu.is_none() {
-            self.move_time_left -= delta_time
-                * if self.using_ultimate.is_some() {
-                    0.5
-                } else {
-                    1.0
-                };
+            if !self.freeze_move_timer {
+                self.move_time_left -= delta_time
+                    * if self.using_ultimate.is_some() {
+                        0.5
+                    } else {
+                        1.0
+                    };
+            }
             if self.move_time_left <= 0.0 {
                 self.move_time_left = 0.0;
                 self.player.is_dead = true;

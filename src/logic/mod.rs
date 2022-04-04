@@ -25,6 +25,7 @@ impl GameState {
         }
 
         // Move player
+        self.freeze_move_timer = false;
         let old_pos = self.player.position;
         let pos = self.player.position + player_move;
         let (mut pos, jump) = wrap_pos(pos, self.arena_bounds);
