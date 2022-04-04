@@ -237,7 +237,7 @@ impl GameState {
                                 info.current < info.max
                                     && match typ {
                                         UpgradeType::ReduceAttackCooldown => {
-                                            self.player_attacks[*i].action.cooldown > 2
+                                            self.player_attacks[*i].action.cooldown > 1
                                         }
                                         _ => true,
                                     }
@@ -281,7 +281,7 @@ impl GameState {
                                 .get_mut(attack_index.unwrap())
                                 .unwrap()
                                 .action
-                                .cooldown_multiplier *= 0.8;
+                                .cooldown -= 1;
                         }
                         UpgradeType::UpgradeAttack => {
                             self.player_attacks

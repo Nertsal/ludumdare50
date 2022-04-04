@@ -19,7 +19,7 @@ pub const PLAYER_ULTIMATE_ALPHA: f32 = 0.5;
 pub const INTERPOLATION_MAX_TIME: f32 = 0.2;
 pub const INTERPOLATION_MIN_SPEED: f32 = 5.0;
 pub const SLOTS_REQUIREMENTS: [Score; 4] = [0, 20, 90, 200];
-pub const LEVEL_SCORES: [Score; 11] = [1, 8, 15, 26, 40, 60, 85, 120, 170, 235, 300];
+pub const LEVEL_SCORES: [Score; 11] = [1, 2, 3, 26, 40, 60, 85, 120, 170, 235, 300];
 
 // Things in world coordinates
 pub const TILE_SIZE: Vec2<f32> = vec2(1.0, 1.0);
@@ -171,7 +171,6 @@ pub struct SpawnPrefab {
 pub struct Action {
     pub cooldown: Time,
     pub next: Time,
-    pub cooldown_multiplier: f32,
 }
 
 pub struct Attack {
@@ -374,13 +373,12 @@ impl Action {
     pub fn new(cooldown: Time) -> Self {
         Self {
             cooldown,
-            next: cooldown,
-            cooldown_multiplier: 1.0,
+            next: cooldown + 1,
         }
     }
 
     pub fn set_on_cooldown(&mut self) {
-        self.next = (self.cooldown as f32 * self.cooldown_multiplier).ceil() as Time;
+        self.next = self.cooldown + 1;
     }
 
     pub fn is_ready(&self) -> bool {

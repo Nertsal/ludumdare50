@@ -154,7 +154,7 @@ fn rotate_randomly(attacks: impl IntoIterator<Item = Attack>) -> impl Iterator<I
 
 fn initial_attacks() -> impl Iterator<Item = Attack> {
     rotate_randomly([Attack::new(
-        2,
+        1,
         [vec2(1, 0)],
         Some(Attack::new(
             2,
@@ -167,7 +167,7 @@ fn initial_attacks() -> impl Iterator<Item = Attack> {
 fn potential_attacks() -> impl Iterator<Item = Attack> {
     rotate_randomly([
         Attack::new(
-            2,
+            1,
             [vec2(1, 0), vec2(2, 1)],
             Some(Attack::new(
                 2,
@@ -180,7 +180,7 @@ fn potential_attacks() -> impl Iterator<Item = Attack> {
             )),
         ),
         Attack::new(
-            3,
+            2,
             [vec2(1, 0), vec2(2, 0), vec2(1, 1)],
             Some(Attack::new(
                 2,
@@ -193,7 +193,7 @@ fn potential_attacks() -> impl Iterator<Item = Attack> {
             )),
         ),
         Attack::new(
-            4,
+            3,
             [vec2(1, 0), vec2(2, 0), vec2(3, 0), vec2(3, 1)],
             Some(Attack::new(
                 2,
@@ -214,7 +214,7 @@ fn potential_attacks() -> impl Iterator<Item = Attack> {
             )),
         ),
         Attack::new(
-            4,
+            3,
             [vec2(1, 0), vec2(2, 1), vec2(2, 0), vec2(2, -1)],
             Some(Attack::new(
                 2,
@@ -242,7 +242,7 @@ fn potential_attacks() -> impl Iterator<Item = Attack> {
             )),
         ),
         Attack::new(
-            4,
+            3,
             [vec2(1, 1), vec2(1, -1), vec2(2, 0), vec2(3, 0)],
             Some(Attack::new(
                 2,

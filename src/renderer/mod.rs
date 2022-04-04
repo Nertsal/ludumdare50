@@ -175,7 +175,6 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
     }
 
     pub fn draw_cooldown(&mut self, time_left: Time, cooldown: Time, aabb: AABB<f32>) {
-        let cooldown = cooldown - 1;
         if cooldown <= 0 {
             return;
         }
