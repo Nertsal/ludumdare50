@@ -13,6 +13,12 @@ impl GameState {
             experience: Experience::new(),
             using_ultimate: None,
             upgrade_menu: None,
+            fade: Fade {
+                min: 0.0,
+                max: 1.0,
+                current: 1.0,
+                speed: -1.0 / FADE_TIME,
+            },
             camera: Camera2d {
                 center: Vec2::ZERO,
                 rotation: 0.0,

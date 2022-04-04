@@ -190,5 +190,10 @@ impl GameState {
                 );
             }
         }
+
+        // Fade
+        let mut color = FADE_COLOR;
+        color.a = self.fade.current;
+        renderer.draw_aabb(AABB::ZERO.extend_positive(framebuffer_size), color);
     }
 }

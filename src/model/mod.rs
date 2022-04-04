@@ -14,6 +14,8 @@ pub type Time = i32;
 pub type Score = u32;
 pub type Position = Vec2<Coord>;
 
+pub const FADE_COLOR: Color<f32> = Color::BLACK;
+pub const FADE_TIME: f32 = 2.0;
 pub const PLAYER_COLOR: Color<f32> = Color::BLUE;
 pub const INTERPOLATION_MAX_TIME: f32 = 0.2;
 pub const INTERPOLATION_MIN_SPEED: f32 = 5.0;
@@ -157,6 +159,13 @@ pub struct Experience {
     pub exp_to_next_lvl: Score,
 }
 
+pub struct Fade {
+    pub min: f32,
+    pub max: f32,
+    pub current: f32,
+    pub speed: f32,
+}
+
 pub struct GameState {
     pub geng: Geng,
     pub assets: Rc<Assets>,
@@ -177,11 +186,26 @@ pub struct GameState {
     pub spawn_prefabs: HashMap<EnemyType, SpawnPrefab>,
     pub upgrades: HashMap<UpgradeType, Upgrade>,
     pub upgrade_menu: Option<UpgradeMenu>,
+    pub fade: Fade,
 }
 
 impl geng::State for GameState {
     fn update(&mut self, delta_time: f64) {
         let delta_time = delta_time as f32;
+
+        // Interpolate player and enemies
+        self.player.interpolation.update(delta_time);
+        for enemy in &mut self.enemies {
+            enemy.interpolation.update(delta_time);
+        }
+
+        // Fade
+        self.fade.current =
+            (self.fade.current + self.fade.speed * delta_time).clamp(self.fade.min, self.fade.max);
+
+        if self.player.is_dead {
+            return;
+        }
 
         // Player move limit
         if self.upgrade_menu.is_none() {
@@ -195,12 +219,6 @@ impl geng::State for GameState {
                 self.move_time_left = 0.0;
                 self.player.is_dead = true;
             }
-        }
-
-        // Interpolate player and enemies
-        self.player.interpolation.update(delta_time);
-        for enemy in &mut self.enemies {
-            enemy.interpolation.update(delta_time);
         }
     }
 
