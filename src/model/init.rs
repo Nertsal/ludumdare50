@@ -34,6 +34,11 @@ impl GameState {
                 rotation: 0.0,
                 fov: 15.0,
             },
+            ui_camera: Camera2d {
+                center: Vec2::ZERO,
+                rotation: 0.0,
+                fov: 1080.0,
+            },
             player: Player {
                 color: PLAYER_COLOR,
                 position: Vec2::ZERO,

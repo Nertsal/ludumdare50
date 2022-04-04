@@ -99,12 +99,12 @@ impl GameState {
             renderer.draw_cross(aabb, DAMAGE_WIDTH, DAMAGE_COLOR);
         }
 
-        let mut renderer = Renderer::new(
-            &self.geng,
-            &self.assets,
-            &geng::PixelPerfectCamera,
-            framebuffer,
+        let framebuffer_size = vec2(
+            self.ui_camera.fov / framebuffer_size.y * framebuffer_size.x,
+            self.ui_camera.fov,
         );
+        self.ui_camera.center = framebuffer_size / 2.0;
+        let mut renderer = Renderer::new(&self.geng, &self.assets, &self.ui_camera, framebuffer);
 
         // Attacks
         let attacks_aabb = AABB::from_corners(

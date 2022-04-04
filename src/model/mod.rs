@@ -217,6 +217,7 @@ pub struct GameState {
     pub geng: Geng,
     pub assets: Rc<Assets>,
     pub camera: Camera2d,
+    pub ui_camera: Camera2d,
     pub arena_bounds: AABB<Coord>,
     pub highscore: AutoSave<Score>,
     pub score: Score,
