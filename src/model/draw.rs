@@ -233,22 +233,44 @@ impl GameState {
                         renderer.draw_attack(new_attack, aabb.extend_up(-aabb.height() / 2.0));
                         vec![]
                     }
-                    UpgradeType::IncUltRadius => vec![format!("+1 TP Radius")],
-                    UpgradeType::ReduceUltCooldown => vec![format!("-1 TP Cooldown")],
-                    UpgradeType::IncDeathTimer => vec![format!("+2 sec Life")],
+                    UpgradeType::IncUltRadius => vec![
+                        format!("Radius"),
+                        format!("Ultimate"),
+                        format!(
+                            "{} -> {}",
+                            self.player_ultimate.radius,
+                            self.player_ultimate.radius + 1
+                        ),
+                    ],
+                    UpgradeType::ReduceUltCooldown => {
+                        vec![
+                            format!("COOLDOWN"),
+                            format!("Ultimate"),
+                            format!(
+                                "{} -> {}",
+                                self.player_ultimate.action.cooldown,
+                                self.player_ultimate.action.cooldown + 1
+                            ),
+                        ]
+                    }
+                    UpgradeType::IncDeathTimer => vec![format!("TIMER"), format!("+2 Sec")],
                     UpgradeType::ReduceAttackCooldown => {
                         let attack = &self.player_attacks[attack_index.unwrap()];
                         vec![
-                            format!("-Cooldown {}", attack_index.unwrap() + 1),
+                            format!("COOLDOWN"),
+                            format!("Attack {}", attack_index.unwrap() + 1),
                             format!(
-                                "({} -> {})",
+                                "{} -> {}",
                                 attack.action.cooldown,
                                 attack.action.cooldown - 1
                             ),
                         ]
                     }
                     UpgradeType::UpgradeAttack => {
-                        vec![format!("Upgrade {}", attack_index.unwrap() + 1)]
+                        vec![
+                            format!("Upgrade"),
+                            format!("Attack {}", attack_index.unwrap() + 1),
+                        ]
                     }
                 };
                 if texts.len() > 0 {
