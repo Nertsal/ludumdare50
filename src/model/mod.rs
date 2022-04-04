@@ -472,6 +472,15 @@ impl Experience {
         }
         lvl_ups
     }
+
+    pub fn get_ratio(&self) -> f32 {
+        if self.level <= 0 {
+            self.exp as f32 / self.exp_to_next_lvl as f32
+        } else {
+            let last_up = LEVEL_SCORES[self.level as usize - 1];
+            (self.exp - last_up) as f32 / (self.exp_to_next_lvl - last_up) as f32
+        }
+    }
 }
 
 impl Requirement {
