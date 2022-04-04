@@ -8,6 +8,13 @@ mod renderer;
 pub struct Assets {
     pub lock: ugli::Texture,
     pub exclamation: ugli::Texture,
+    pub hit: geng::Sound,
+    pub death: geng::Sound,
+    pub movement: geng::Sound,
+    pub blip: geng::Sound,
+    pub select: geng::Sound,
+    pub upgrade: geng::Sound,
+    // pub music: geng::Sound,
 }
 
 fn main() {
@@ -25,6 +32,7 @@ fn main() {
                 let mut assets = assets.unwrap();
                 assets.lock.set_filter(ugli::Filter::Nearest);
                 assets.exclamation.set_filter(ugli::Filter::Nearest);
+                // assets.music.looped = true;
                 model::GameState::new(&geng, &Rc::new(assets))
             }
         }),

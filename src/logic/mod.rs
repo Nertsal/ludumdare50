@@ -21,10 +21,12 @@ impl GameState {
                 choice = min;
             }
             upgrade_menu.choice = choice as usize;
+            self.play_sound(self.assets.blip.play());
             return;
         }
 
         // Move player
+        self.play_sound(self.assets.movement.play());
         self.freeze_move_timer = false;
         let old_pos = self.player.position;
         let pos = self.player.position + player_move;
@@ -74,14 +76,19 @@ impl GameState {
 
         // Player actions
         let mut attack_positions = Vec::new();
+        let mut attacked = false;
         for attack in &mut self.player_attacks {
             if attack.action.update(1) {
+                attacked = true;
                 attack.action.set_on_cooldown();
                 attack_positions.extend(attack.attack_positions(self.player.position));
             }
         }
         self.player_ultimate.action.update(1);
         self.attack_positions(Caster::Player, &attack_positions);
+        if attacked {
+            self.play_sound(self.assets.hit.play());
+        }
 
         // Count siblings
         let mut siblings = HashMap::new();
@@ -128,8 +135,17 @@ impl GameState {
             .iter()
             .any(|enemy| enemy.position == self.player.position)
         {
-            self.player.is_dead = true;
+            self.kill_player();
         }
+    }
+
+    pub fn play_sound(&mut self, mut sound: geng::SoundEffect) {
+        sound.set_volume(self.volume);
+    }
+
+    pub fn kill_player(&mut self) {
+        self.player.is_dead = true;
+        self.play_sound(self.assets.death.play());
     }
 
     fn get_in_point(&self, position: Position) -> Option<Caster> {
@@ -227,6 +243,8 @@ impl GameState {
                 options,
                 choice: 0,
             });
+
+            self.play_sound(self.assets.upgrade.play());
         }
     }
 
@@ -280,6 +298,7 @@ impl GameState {
                     if menu.lvl_ups_left > 0 {
                         self.upgrade_menu = Some(menu);
                     }
+                    self.play_sound(self.assets.select.play());
                 }
             }
         }

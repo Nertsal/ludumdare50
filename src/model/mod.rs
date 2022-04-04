@@ -236,6 +236,8 @@ pub struct GameState {
     pub upgrades: HashMap<UpgradeType, Upgrade>,
     pub upgrade_menu: Option<UpgradeMenu>,
     pub fade: Fade,
+    pub sounds: Vec<geng::SoundEffect>,
+    pub volume: f64,
 }
 
 impl geng::State for GameState {
@@ -272,7 +274,7 @@ impl geng::State for GameState {
             }
             if self.move_time_left <= 0.0 {
                 self.move_time_left = 0.0;
-                self.player.is_dead = true;
+                self.kill_player();
             }
         }
     }
@@ -304,7 +306,7 @@ impl geng::State for GameState {
                     self.select_upgrade();
                 }
                 geng::Key::R => {
-                    self.player.is_dead = true;
+                    self.kill_player();
                 }
                 _ => {}
             },

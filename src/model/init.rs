@@ -7,6 +7,7 @@ impl GameState {
     }
 
     pub fn new(geng: &Geng, assets: &Rc<Assets>) -> Self {
+        // assets.music.play().set_volume(0.05);
         Self {
             geng: geng.clone(),
             assets: assets.clone(),
@@ -20,6 +21,8 @@ impl GameState {
             upgrade_menu: None,
             freeze_move_timer: true,
             spawns: vec![],
+            sounds: vec![],
+            volume: 0.2,
             fade: Fade {
                 min: 0.0,
                 max: 1.0,
