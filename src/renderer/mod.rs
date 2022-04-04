@@ -259,10 +259,17 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
         let aabb = aabb.translate(offset);
         self.draw_text(
             "ULTIMATE",
-            vec2(aabb.center().x, aabb.top_left().y + font_size),
+            vec2(aabb.center().x, aabb.top_left().y + 3.0 * font_size),
             vec2(0.5, 0.0),
             font_size,
             Color::MAGENTA,
+        );
+        self.draw_text(
+            "(Space)",
+            vec2(aabb.center().x, aabb.top_left().y + 0.75 * font_size),
+            vec2(0.5, 0.0),
+            font_size * 0.9,
+            Color::WHITE,
         );
 
         let tile_size = vec2(scale, scale);
