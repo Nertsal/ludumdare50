@@ -111,7 +111,8 @@ pub const TIME_BAR_BACKGROUND_COLOR: Color<f32> = Color {
     b: 0.4,
     a: 1.0,
 };
-pub const TIME_BAR_COLOR: Color<f32> = Color::GREEN;
+pub const TIME_BAR_LEFT_COLOR: Color<f32> = Color::RED;
+pub const TIME_BAR_RIGHT_COLOR: Color<f32> = Color::GREEN;
 pub const TIME_BORDER_COLOR: Color<f32> = Color {
     r: 0.2,
     g: 0.2,

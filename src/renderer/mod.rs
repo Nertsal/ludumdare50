@@ -1,4 +1,4 @@
-use geng::Draw2d;
+use geng::{draw_2d::ColoredVertex, Draw2d};
 
 use crate::model::{
     Attack, Teleport, Time, ATTACK_COOLDOWN_BACKGROUND_COLOR, ATTACK_COOLDOWN_BAR_EXTRA_SPACE,
@@ -55,6 +55,27 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
 
     pub fn draw_aabb(&mut self, aabb: AABB<f32>, color: Color<f32>) {
         draw_2d::Quad::new(aabb, color).draw_2d(self.geng, self.framebuffer, self.camera);
+    }
+
+    pub fn draw_aabb_gradient(
+        &mut self,
+        aabb: AABB<f32>,
+        color_left: Color<f32>,
+        color_right: Color<f32>,
+    ) {
+        let y_cen = aabb.center().y;
+        draw_2d::Segment::new_gradient(
+            ColoredVertex {
+                a_pos: vec2(aabb.x_min, y_cen),
+                a_color: color_left,
+            },
+            ColoredVertex {
+                a_pos: vec2(aabb.x_max, y_cen),
+                a_color: color_right,
+            },
+            aabb.height(),
+        )
+        .draw_2d(self.geng, self.framebuffer, self.camera);
     }
 
     pub fn draw_texture(&mut self, texture: &ugli::Texture, aabb: AABB<f32>) {

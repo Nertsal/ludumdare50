@@ -169,7 +169,15 @@ impl GameState {
         let time_ratio = self.move_time_left / self.move_time_limit;
         let time_bar = time_aabb.extend_symmetric(vec2(0.0, -TIME_BAR_INNER_SPACE));
         let time_bar = time_bar.extend_right((time_ratio - 1.0) * time_bar.width());
-        renderer.draw_aabb(time_bar, TIME_BAR_COLOR);
+        let a = TIME_BAR_LEFT_COLOR;
+        let b = TIME_BAR_RIGHT_COLOR;
+        let color_right = Color {
+            r: a.r + (b.r - a.r) * time_ratio,
+            g: a.g + (b.g - a.g) * time_ratio,
+            b: a.b + (b.b - a.b) * time_ratio,
+            a: a.a + (b.a - a.a) * time_ratio,
+        };
+        renderer.draw_aabb(time_bar, color_right);
         renderer.draw_aabb_frame(time_aabb, TIME_BORDER_WIDTH, TIME_BORDER_COLOR);
 
         // Experience
