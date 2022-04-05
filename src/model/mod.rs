@@ -358,6 +358,20 @@ impl MovementType {
     }
 }
 
+impl Enemy {
+    pub fn move_towards(&mut self, delta: Position) -> Position {
+        let pos = self.position + self.movement.move_towards(delta);
+        if let MovementType::SingleDouble { is_next_single } = &self.movement {
+            self.color = if *is_next_single {
+                Color::GREEN
+            } else {
+                Color::rgb(0.0, 0.5, 0.0)
+            };
+        }
+        pos
+    }
+}
+
 impl SpawnPrefab {
     pub fn refresh_cooldown(&mut self, siblings: usize) {
         let killed_multiplier = 1.0 - self.killed_siblings as f32 * 0.05;

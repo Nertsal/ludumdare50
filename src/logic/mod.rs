@@ -66,7 +66,7 @@ impl GameState {
         for enemy in &mut self.enemies {
             let delta = self.player.position - enemy.position;
             enemy.position = clamp_pos(
-                enemy.position + enemy.movement.move_towards(delta),
+                enemy.move_towards(delta),
                 self.arena_bounds,
             );
             enemy.interpolation.queue(enemy.position.map(|x| x as f32));
