@@ -47,8 +47,10 @@ pub const ATTACK_COOLDOWN_BAR_EXTRA_SPACE: f32 = 3.0;
 pub const ATTACK_COOLDOWN_HEIGHT: f32 = 15.0;
 pub const LEVEL_OUTER_SPACE: f32 = 10.0;
 pub const LEVEL_INNER_SPACE: f32 = 7.5;
+pub const ATTACK_HIGHLIGHT_WIDTH: f32 = 2.0;
 
 // Colors
+pub const ATTACK_HIGHLIGHT_COLOR: Color<f32> = Color::RED;
 pub const FADE_COLOR: Color<f32> = Color::BLACK;
 pub const PLAYER_COLOR: Color<f32> = Color::BLUE;
 pub const GRID_COLOR: Color<f32> = Color::GRAY;

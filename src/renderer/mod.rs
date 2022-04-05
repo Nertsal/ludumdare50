@@ -2,9 +2,9 @@ use geng::Draw2d;
 
 use crate::model::{
     Attack, Teleport, Time, ATTACK_COOLDOWN_BACKGROUND_COLOR, ATTACK_COOLDOWN_BAR_EXTRA_SPACE,
-    ATTACK_COOLDOWN_COLOR, ATTACK_COOLDOWN_HEIGHT, ATTACK_LOCK_TEXT_COLOR,
-    LEVEL_BACKGROUND_BACK_COLOR, LEVEL_BACKGROUND_FRONT_COLOR, LEVEL_INNER_SPACE,
-    LEVEL_OUTER_SPACE, LEVEL_TEXT_COLOR, SLOTS_REQUIREMENTS,
+    ATTACK_COOLDOWN_COLOR, ATTACK_COOLDOWN_HEIGHT, ATTACK_HIGHLIGHT_COLOR, ATTACK_HIGHLIGHT_WIDTH,
+    ATTACK_LOCK_TEXT_COLOR, LEVEL_BACKGROUND_BACK_COLOR, LEVEL_BACKGROUND_FRONT_COLOR,
+    LEVEL_INNER_SPACE, LEVEL_OUTER_SPACE, LEVEL_TEXT_COLOR, SLOTS_REQUIREMENTS,
 };
 
 use super::*;
@@ -150,6 +150,13 @@ impl<'a, 'f, C: geng::AbstractCamera2d> Renderer<'a, 'f, C> {
                 Some(attack) => {
                     self.draw_cooldown(attack.action.next, attack.action.cooldown, cd_aabb);
                     self.draw_attack(attack, attack_aabb);
+                    if attack.action.next <= 1 {
+                        let size = single_aabb.size();
+                        let aabb =
+                            logic::grid_cell_aabb(vec2(0, (attacks_count - index - 1) as _), size)
+                                .translate(bottom_left + size / 2.0);
+                        self.draw_aabb_frame(aabb, ATTACK_HIGHLIGHT_WIDTH, ATTACK_HIGHLIGHT_COLOR);
+                    }
                 }
                 None => {
                     if index >= available_attacks {
