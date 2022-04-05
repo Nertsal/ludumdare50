@@ -1,0 +1,1 @@
+This is a roguelike, in which the player does not control their attacks! It was made for the Ludum Dare 50 game jam in 72 hours ([submission](TODO), [itch](https://nestral.itch.io/circlegame)) using Rust programming language and a [custom engine](https://github.com/kuviman/geng)
