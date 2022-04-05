@@ -144,14 +144,14 @@ impl GameState {
             &format!("Points: {}", self.score),
             vec2(10.0, framebuffer_size.y - 10.0),
             vec2(0.0, 1.0),
-            20.0,
+            30.0,
             Color::GRAY,
         );
         renderer.draw_text(
             &format!("High Score: {}", *self.highscore),
             vec2(10.0, framebuffer_size.y - 100.0),
             vec2(0.0, 1.0),
-            15.0,
+            20.0,
             Color::GRAY,
         );
 
